@@ -1,0 +1,76 @@
+name: "CDDL Conformance"
+
+# Instance-level conformance for the POE profile: prove it is a genuine subset of
+# base CoRIM. `make test` validates that the golden + forward-compatible fixtures
+# are accepted -- and the negative fixture rejected -- by the authoritative base
+# decoder (Microsoft's corim-cli, draft-ietf-rats-corim-10), the pycddl payload
+# check, and the Ruby cddl grammar check. See scripts/test-cddl.sh + RELEASE_CDDL.md.
+#
+# The manual-only `make fuzz` target is deliberately NOT run here (non-deterministic).
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "cddl/**"
+      - "scripts/validate-cddl.sh"
+      - "scripts/test-cddl.sh"
+      - ".github/workflows/cddl-conformance.yml"
+  pull_request:
+    paths:
+      - "cddl/**"
+      - "scripts/validate-cddl.sh"
+      - "scripts/test-cddl.sh"
+      - ".github/workflows/cddl-conformance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    name: "CDDL Conformance"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Checkout"
+      uses: actions/checkout@v6
+
+    - name: "Set up Ruby (cddl + cbor-diag)"
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: "3.3"
+
+    - name: "Install cddl + cbor-diag gems"
+      run: gem install --no-document cddl cbor-diag
+
+    - name: "Set up Python (pycddl + cbor2)"
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: "Install pycddl + cbor2"
+      run: |
+        python -m venv "$HOME/.local/share/poe-tools/cddlvenv"
+        "$HOME/.local/share/poe-tools/cddlvenv/bin/pip" install --quiet --upgrade pip
+        "$HOME/.local/share/poe-tools/cddlvenv/bin/pip" install --quiet pycddl cbor2
+
+    - name: "Cache corim-cli build"
+      id: corim-cache
+      uses: actions/cache@v5
+      with:
+        path: ~/.local/bin/corim-cli
+        key: corim-cli-d798092
+
+    - name: "Build corim-cli (Azure/corim, draft-10)"
+      if: steps.corim-cache.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        git clone --quiet https://github.com/Azure/corim.git /tmp/azure-corim
+        git -C /tmp/azure-corim checkout --quiet d798092e4d4baf42d5f87b9d0130662c180b91e4
+        (cd /tmp/azure-corim && cargo build --quiet -p corim-cli --release)
+        cp /tmp/azure-corim/target/release/corim-cli "$HOME/.local/bin/corim-cli"
+
+    - name: "make test (instance conformance)"
+      run: |
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+        make test

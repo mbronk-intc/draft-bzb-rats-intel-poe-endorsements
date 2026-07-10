@@ -14,6 +14,11 @@ and the Intel CoRIM profile
 - `cddl/exports/intel-poe-profile.cddl` — the single, self-contained profile
   grammar. This is what the draft appendix `{::include}`s and what is published
   as the downloadable release asset.
+- `cddl/fixtures/` — checked-in conformance fixtures (`poe-golden.cbor`,
+  `poe-golden-fwdcompat.cbor`, `poe-negative-bare.cbor`) and their deterministic
+  generator [`make-fixtures.py`](cddl/fixtures/make-fixtures.py). Used by
+  `make test` to prove the profile is a genuine subset of base CoRIM.
+  Regenerate with `make fixtures` after any wire-shape change.
 - `cddl/imports/` — a build-time fetch cache for the grammars `make check-cddl`
   validates the profile against: `corim-autogen.cddl` (base CoRIM) and
   `icorim-autogen.cddl` (the Intel Profile's assembled Intel-CoRIM grammar, used
@@ -23,6 +28,28 @@ and the Intel CoRIM profile
   populate/refresh the cache explicitly with
   [`scripts/update-cddl-imports.sh`](scripts/update-cddl-imports.sh) (use
   `-r <nn>` for a specific CoRIM revision).
+
+## Validating the profile
+
+Two complementary checks, both wired into `make check` and CI:
+
+- **`make check-cddl`** ([`scripts/validate-cddl.sh`](scripts/validate-cddl.sh))
+  — *grammar*-level: the profile grammar is well-formed and composes with (narrows)
+  base CoRIM, plus an Intel Profile code-point drift guard.
+- **`make test`** ([`scripts/test-cddl.sh`](scripts/test-cddl.sh)) —
+  *instance*-level subset conformance over the `cddl/fixtures/`: the golden and
+  forward-compatible CoRIMs are accepted, and the deliberately malformed negative
+  is rejected, by three engines — Microsoft's `corim-cli` (Azure/corim, the
+  authoritative `draft-ietf-rats-corim-10` decoder and the consumer of POE data),
+  a `pycddl` payload check, and the Ruby `cddl` grammar check. The conformance
+  tools are provisioned by the devcontainer
+  ([`.devcontainer/provision-cddl-tools.sh`](.devcontainer/provision-cddl-tools.sh))
+  and by the *CDDL Conformance* GitHub Action.
+
+`make fuzz` ([`scripts/fuzz-cddl.sh`](scripts/fuzz-cddl.sh)) is an optional,
+manual-only breadth aid (generates random valid instances and reports how the
+decoders react); it is deliberately **not** part of `make check` or CI because
+its results are non-deterministic.
 
 The CDDL is published to a GitHub Release two ways:
 
