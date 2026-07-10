@@ -1,0 +1,225 @@
+; ============================================================
+; POE CoRIM profile -- CDDL
+; Profile identifier: "tag:intel.com,2026:tee.poe#1.0"
+; Narrowing of draft-ietf-rats-corim-10.
+;
+; Dependencies: none at the CDDL level. This grammar is
+; self-contained -- it validates standalone against only the
+; RFC 8610 CDDL prelude (bstr, tstr, int, time, any) and has
+; no file/{::include} dependency on the base CoRIM grammar.
+; It does, however, *semantically* depend on:
+;   [CoRIM] draft-ietf-rats-corim-10 -- the CBOR tag numbers
+;           (#6.18, #6.32, #6.111, #6.501, #6.506), map-key
+;           code points, and the profile-narrowing mechanism.
+;   [COSE]  RFC 9052 -- the #6.18 COSE_Sign1 envelope and its
+;           protected/unprotected header label assignments.
+; The base grammar is not vendored here; scripts/validate-cddl.sh
+; fetches it ad-hoc at check time (optionally cached, git-ignored,
+; under cddl/imports/) purely as a cross-check aid. It is not
+; required to parse this file.
+; ============================================================
+
+; --- Profile-private extension keys. Identifiers and the
+; --- $tee-platform-instance-id-type socket are reused verbatim
+; --- from the Intel Profile ([INTEL-PROFILE], Section 8.3.6);
+; --- tee.owner-name (-401) is allocated by this profile. Both
+; --- are negative-integer private code points per [CoRIM],
+; --- Section 5.2.1.
+; ---
+; --- The redeclaration below (see header) is value-identical to
+; --- the Intel Profile, so concatenating this profile with the
+; --- Intel Profile grammar is harmless -- CDDL tolerates an
+; --- identical rule redefinition (at most a benign warning) and
+; --- the $tee-*-type sockets merge additively. A *conflicting*
+; --- value would be a spec error: the desired fail-closed
+; --- behaviour.
+
+tee.platform-instance-id = -101
+tee.owner-name           = -401
+
+; POE narrows the Intel PIID value-type socket to two fixed
+; lengths and defines the owner-name socket locally.
+$tee-platform-instance-id-type /= bstr .size 16
+$tee-platform-instance-id-type /= bstr .size 32
+$tee-owner-name-type           /= tstr .size (1..1024)
+
+; --- Borrowed base aliases (definitions appear in [COSE] /
+; --- [CoRIM]; restated locally for self-containment).
+; --- `cose-label` is value-identical to base CoRIM's
+; --- `cose-label` (int / tstr), so this restatement is a benign
+; --- identical redefinition when composed with base or the
+; --- Intel grammar.
+
+cose-label                = int / tstr
+
+; --- Profile identifier (RFC 4151 tag URI).
+
+poe-profile-id = "tag:intel.com,2026:tee.poe#1.0"
+
+; --- OID byte strings (informational; literal pinning is
+; --- normative in prose, not in CDDL).
+
+poe-piid-env-oid        = bstr  ; 2.16.840.1.113741.1.13.2.6.1
+poe-owner-endorse-oid   = bstr  ; 2.16.840.1.113741.1.13.2.12.1
+
+; ------------------------------------------------------------
+; Top-level: signed POE CoRIM
+; ------------------------------------------------------------
+
+poe-signed-corim = #6.18([
+  bstr .cbor poe-protected-header-map,        ; protected
+  poe-unprotected-header-map,                 ; unprotected
+  bstr .cbor poe-tagged-unsigned-corim-map,   ; payload
+  bstr                                        ; signature
+])
+
+; --- Protected header
+
+poe-protected-header-map = {
+  1  => -35,                        ; alg = ES384
+  3  => "application/rim+cbor",     ; content-type
+  4  => bstr,                       ; kid (RFC 9679 thumbprint)
+  15 => poe-cwt-claims-map,         ; CWT-Claims (REQUIRED)
+  ? 8 => bstr .cbor poe-corim-meta-map,  ; corim-meta (legacy)
+  ? "tee.refresh-uri" => #6.32(tstr),    ; optional refresh URI
+  * cose-label => any               ; future profile-private only
+}
+
+poe-cwt-claims-map = {
+  1 => tstr,                        ; iss (signer identity)
+  ; closed map: no extension point; adding claims needs a
+  ; profile version bump. (no nbf/5, exp/4 -- see Signer metadata)
+}
+
+poe-corim-meta-map = {
+  0 => poe-signer-map,              ; signer (REQUIRED if present)
+  ; (no signature-validity/1 -- see Signer metadata)
+}
+
+poe-signer-map = {
+  0 => tstr,                        ; signer-name (== CWT iss)
+  ? 1 => any                        ; signer-uri (base CoRIM)
+}
+
+; --- Unprotected header
+
+poe-unprotected-header-map = {
+  33 => [ 2*bstr ],                 ; x5chain (at least leaf+1)
+  * cose-label => any
+}
+
+; ------------------------------------------------------------
+; Payload: tagged unsigned CoRIM map
+; ------------------------------------------------------------
+
+poe-tagged-unsigned-corim-map = #6.501(poe-unsigned-corim-map)
+
+poe-unsigned-corim-map = {
+  0 => bstr .size 16,               ; id (UUIDv8, untagged)
+  1 => [ poe-tagged-concise-mid-tag ],   ; tags: exactly one
+  3 => poe-profile-id,              ; profile (tstr; see Profile)
+  4 => poe-validity-map,            ; rim-validity (REQUIRED)
+  ? 2 => [ + any ],                 ; dependent-rims: optional,
+                                    ; informational, verifier-ignored
+  ? 5 => [ + any ],                 ; entities (CoRIM-level):
+                                    ; optional, verifier-ignored
+  ; forward-compat: keys unknown in #1.0. Verifiers MUST ignore;
+  ; producers conforming to #1.0 SHOULD NOT emit (see Conformance).
+  * (int / tstr) => any
+}
+
+poe-validity-map = {
+  0 => time,   ; not-before (#6.1 epoch-based; CoRIM Sec 7.3)
+  1 => time,   ; not-after  (#6.1 epoch-based; CoRIM Sec 7.3)
+}
+
+; ------------------------------------------------------------
+; POE CoMID
+; ------------------------------------------------------------
+
+poe-tagged-concise-mid-tag =
+  #6.506(bstr .cbor poe-concise-mid-tag-map)
+
+poe-concise-mid-tag-map = {
+  1 => poe-tag-identity-map,        ; tag-identity
+  4 => poe-triples-map,             ; triples
+  ; (no entities/5 -- see Conformance)
+}
+
+poe-tag-identity-map = {
+  0 => bstr .size 16,               ; tag-id (UUIDv8, untagged)
+  ; (no tag-version/1 -- see Conformance)
+}
+
+poe-triples-map = {
+  ; conditional-endorsement-triples: exactly one record; no
+  ; other triple kinds permitted.
+  10 => [ poe-cond-endorse-triple-record ],
+}
+
+; ------------------------------------------------------------
+; Conditional-endorsement triple record
+; ------------------------------------------------------------
+
+poe-cond-endorse-triple-record = [
+  conditions:            [ poe-condition-stateful-env ],
+  endorsement-additions: [ poe-endorsement-stateful-env ],
+]
+
+; --- Conditions side: PIID-bearing environment
+
+poe-condition-stateful-env = [
+  environment: poe-piid-environment-map,
+  claims-list: [ poe-piid-measurement-map ],  ; [+ measurement-map]
+]
+
+poe-piid-environment-map = {
+  0 => poe-piid-class-map,          ; class (REQUIRED)
+  ; (no instance/1, group/2 -- see Conformance)
+}
+
+poe-piid-class-map = {
+  0 => #6.111(poe-piid-env-oid),    ; class-id: tagged-oid-type
+  ; (no vendor/model/layer/index -- see Conformance)
+}
+
+poe-piid-measurement-map = {
+  ? 0 => tstr,                   ; mkey ("tee.poe.platform-binding")
+  1 => poe-piid-mval-map,           ; mval
+  ; (no authorized-by/2 -- see Conformance)
+}
+
+; Closed map: the Intel Profile plugs keys into the *open*
+; $$measurement-values-map-extension socket; this profile pins a
+; closed map instead, so exactly one key is permitted and any
+; other is rejected.
+poe-piid-mval-map = {
+  tee.platform-instance-id => $tee-platform-instance-id-type,
+}
+
+; --- Endorsements side: Owner identity
+
+poe-endorsement-stateful-env = [
+  environment:  poe-owner-environment-map,
+  measurements: [ poe-owner-measurement-map ],  ; [+ measurement-map]
+]
+
+poe-owner-environment-map = {
+  0 => poe-owner-class-map,         ; class (REQUIRED)
+  ; (no instance/1, group/2 -- see Conformance)
+}
+
+poe-owner-class-map = {
+  0 => #6.111(poe-owner-endorse-oid),  ; class-id: tagged-oid-type
+  ; (no vendor/model/layer/index -- see Conformance)
+}
+
+poe-owner-measurement-map = {
+  ? 0 => tstr,                   ; mkey ("tee.poe.ownership-claims")
+  1 => poe-owner-mval-map,          ; mval
+  ; (no authorized-by/2 -- see Conformance)
+}
+
+poe-owner-mval-map = {
+  tee.owner-name => $tee-owner-name-type,   ; closed map (see PIID)
+}
