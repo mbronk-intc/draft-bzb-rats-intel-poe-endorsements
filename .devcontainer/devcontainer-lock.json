@@ -1,0 +1,9 @@
+{
+  "features": {
+    "ghcr.io/hspaans/devcontainer-features/pymarkdownlnt:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/hspaans/devcontainer-features/pymarkdownlnt@sha256:2d122fcb2f3f0ada6889ad3e7c2640ad4962e4318f99028b0f65769312076c06",
+      "integrity": "sha256:2d122fcb2f3f0ada6889ad3e7c2640ad4962e4318f99028b0f65769312076c06"
+    }
+  }
+}
