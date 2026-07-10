@@ -1,0 +1,6 @@
+# Base CoRIM + Intel Profile grammars fetched here are a build-time cache,
+# never committed. Populate on demand with scripts/update-cddl-imports.sh;
+# validate-cddl.sh fetches ad-hoc when absent. Keep the dir tracked, ignore
+# its contents.
+*
+!.gitignore

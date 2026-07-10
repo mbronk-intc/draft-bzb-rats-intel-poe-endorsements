@@ -1,8 +1,8 @@
 <!-- regenerate: on (set to off if you edit this file) -->
 
-# TODO - Your title
+# CoRIM Profile for Intel Platform Ownership Endorsements (POE)
 
-This is the working area for the individual Internet-Draft, "TODO - Your title".
+This is the working area for the individual Internet-Draft, "A CoRIM Profile for Intel Platform Ownership Endorsements (POE)".
 
 * [Editor's Copy](https://mbronk-intc.github.io/draft-bzb-rats-intel-poe-endorsements/#go.draft-bzb-rats-intel-poe-endorsements.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-bzb-rats-intel-poe-endorsements)
