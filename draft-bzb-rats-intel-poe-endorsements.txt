@@ -89,15 +89,16 @@ Table of Contents
      4.4.  Endorsements clause
      4.5.  Extension claims
    5.  Complete Example
-   6.  Security Considerations
-     6.1.  Issuer trust
-     6.2.  Issuer is not necessarily Owner
-     6.3.  Revocation
-     6.4.  PIID confidentiality
-   7.  IANA Considerations
-   8.  References
-     8.1.  Normative References
-     8.2.  Informative References
+   6.  Implementation Status
+   7.  Security Considerations
+     7.1.  Issuer trust
+     7.2.  Issuer is not necessarily Owner
+     7.3.  Revocation
+     7.4.  PIID confidentiality
+   8.  IANA Considerations
+   9.  References
+     9.1.  Normative References
+     9.2.  Informative References
    Appendix A.  CDDL
    Acknowledgments
    Authors' Addresses
@@ -386,7 +387,7 @@ Table of Contents
    populated as #6.1 epoch-based numeric date-time values ([CoRIM],
    Section 7.3; [RFC8949], Section 3.4.2).  A bounded validity window
    provides the only standing time-based ceiling on a stale endorsement
-   in the absence of an in-band revocation channel; see Section 6.
+   in the absence of an in-band revocation channel; see Section 7.
 
    This profile sets no normative upper bound on not-after - not-before.
    Issuers SHOULD keep windows short to bound staleness, and SHOULD re-
@@ -691,9 +692,31 @@ Table of Contents
 
            Figure 4: Complete POE CoRIM example (CBOR diagnostic)
 
-6.  Security Considerations
+6.  Implementation Status
 
-6.1.  Issuer trust
+   This section records implementations of the profile defined by this
+   specification, in the spirit of [RFC7942].
+
+   *  Intel provides open-source tooling for the POE flow at
+      https://github.com/intel/confidential-computing.tee.dcap.poe
+      (https://github.com/intel/confidential-computing.tee.dcap.poe),
+      distributed under the BSD-3-Clause license:
+
+      -  The Intel(R) POE Generator (poe-gen-tool) extracts the Platform
+         Instance Identity (PIID) from a Platform Manifest, PCK
+         certificate, or SGX/TDX Quote, and builds and signs a POE CoRIM
+         as specified in this document.
+
+      -  The Intel(R) POE Evaluator (poe-eval-tool) parses a POE CoRIM,
+         matches its bound PIID against attestation Evidence, and
+         surfaces the endorsed owner identity to the caller.
+
+      Both tools track the tag:intel.com,2026:tee.poe#1.0 profile
+      defined here.
+
+7.  Security Considerations
+
+7.1.  Issuer trust
 
    A POE is only as trustworthy as the COSE_Sign1 signer.  Relying
    Parties MUST establish a trust anchor for the Issuer's signing
@@ -701,7 +724,7 @@ Table of Contents
    trust hierarchy.  Operational mechanisms for distributing Issuer
    trust anchors are deployment-specific.
 
-6.2.  Issuer is not necessarily Owner
+7.2.  Issuer is not necessarily Owner
 
    This profile decouples the Issuer (who signs the CoRIM) from the
    Owner (whose identity is endorsed), so that a Cloud Service Provider
@@ -711,7 +734,7 @@ Table of Contents
    relationship at the policy layer using the Issuer identity surfaced
    by the Verifier (see Section 4.3) and the tee.owner-name claim.
 
-6.3.  Revocation
+7.3.  Revocation
 
    This profile defines no in-band revocation mechanism for individual
    POEs.  Issuers MUST limit POE validity windows for their deployment
@@ -723,7 +746,7 @@ Table of Contents
    Intel platforms ([SGX-PCK]) and SHOULD be used to keep POE and PCK
    collateral in lock-step.
 
-6.4.  PIID confidentiality
+7.4.  PIID confidentiality
 
    The PIID is a per-instance identifier that can be used to track a
    platform across attestation flows.  A POE makes the PIID-Owner
@@ -731,7 +754,7 @@ Table of Contents
    Issuers that distribute POEs to untrusted parties SHOULD consider
    whether this disclosure is acceptable in their threat model.
 
-7.  IANA Considerations
+8.  IANA Considerations
 
    This document requests no IANA action.
 
@@ -762,9 +785,9 @@ Table of Contents
    may relocate the normative-of-record entry for -101 accordingly
    without affecting IANA.
 
-8.  References
+9.  References
 
-8.1.  Normative References
+9.1.  Normative References
 
    [CoRIM]    Birkholz, H., Fossati, T., Deshpande, Y., Smith, N., and
               W. Pan, "Concise Reference Integrity Manifest", Work in
@@ -832,7 +855,7 @@ Table of Contents
               DOI 10.17487/RFC9679, December 2024,
               <https://www.rfc-editor.org/rfc/rfc9679>.
 
-8.2.  Informative References
+9.2.  Informative References
 
    [INTEL-PROFILE]
               Beaney, J., Chinchilla, F., Deshpande, Y., Scarlata, V.,
@@ -851,6 +874,11 @@ Table of Contents
    [RATS-ARCH]
               "Remote ATtestation procedureS (RATS) Architecture",
               RFC 9334, n.d., <https://www.rfc-editor.org/rfc/rfc9334>.
+
+   [RFC7942]  Sheffer, Y. and A. Farrel, "Improving Awareness of Running
+              Code: The Implementation Status Section", BCP 205,
+              RFC 7942, DOI 10.17487/RFC7942, July 2016,
+              <https://www.rfc-editor.org/rfc/rfc7942>.
 
    [SGX-PCK]  "Intel SGX PCK Certificate and Certificate Revocation List
               Profile Specification", n.d.,
