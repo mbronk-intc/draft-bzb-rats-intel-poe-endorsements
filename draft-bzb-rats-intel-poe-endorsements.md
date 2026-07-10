@@ -73,6 +73,7 @@ informative:
     target: https://www.rfc-editor.org/rfc/rfc9334
     seriesinfo:
       RFC: 9334
+  RFC7942:    # Implementation Status (running code)
   SGX-PCK:
     title: "Intel SGX PCK Certificate and Certificate Revocation List Profile Specification"
     target: https://api.trustedservices.intel.com/documents/Intel_SGX_PCK_Certificate_CRL_Spec-1.5.pdf
@@ -701,6 +702,37 @@ readability.
 ])
 ~~~
 {: #fig-example title="Complete POE CoRIM example (CBOR diagnostic)"}
+
+# Implementation Status
+
+This section records implementations of the profile defined by this
+specification, in the spirit of {{RFC7942}}.
+
+
+- Intel provides open-source tooling for the POE flow at
+  [https://github.com/intel/confidential-computing.tee.dcap.poe](https://github.com/intel/confidential-computing.tee.dcap.poe),
+  distributed under the BSD-3-Clause license:
+
+  - The Intel(R) POE Generator (`poe-gen-tool`) extracts the Platform
+    Instance Identity (PIID) from a Platform Manifest, PCK certificate,
+    or SGX/TDX Quote, and builds and signs a POE CoRIM as specified in
+    this document.
+  - The Intel(R) POE Evaluator (`poe-eval-tool`) parses a POE CoRIM,
+    matches its bound PIID against attestation Evidence, and surfaces the
+    endorsed owner identity to the caller.
+
+  Both tools track the `tag:intel.com,2026:tee.poe#1.0` profile
+  defined here.
+
+{::comment}
+  AUTHOR NOTE:
+  At the time of writing, the public open-source POE tooling
+  (poe-gen-tool / poe-eval-tool) at the URL below is in the process of
+  being released. The generate/sign and evaluate capabilities described
+  here are present-tense in the text on the assumption they are public
+  by the time this draft is posted; confirm the repository reflects them
+  before relying on this section externally.
+{:/comment}
 
 # Security Considerations
 
