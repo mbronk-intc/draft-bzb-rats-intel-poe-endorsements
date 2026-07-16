@@ -1189,6 +1189,14 @@ Integrity Manifest (CoRIM) data model.<a href="#section-abstract-2" class="pilcr
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
                 <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-conformance-constraints" class="internal xref">Conformance constraints</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.1">
+                    <p id="section-toc.1-1.3.2.1.2.1.1"><a href="#section-3.1.1" class="auto internal xref">3.1.1</a>.  <a href="#name-producer-requirements" class="internal xref">Producer requirements</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.2">
+                    <p id="section-toc.1-1.3.2.1.2.2.1"><a href="#section-3.1.2" class="auto internal xref">3.1.2</a>.  <a href="#name-verifier-requirements" class="internal xref">Verifier requirements</a></p>
+</li>
+                </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
                 <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-signer-metadata" class="internal xref">Signer metadata</a></p>
@@ -1448,56 +1456,87 @@ claim.<a href="#section-3-2.2.1" class="pilcrow">¶</a></p>
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-conformance-constraints" class="section-name selfRef">Conformance constraints</a>
         </h3>
 <p id="section-3.1-1">This profile fully defines the structure of a POE CoRIM, and adopts an
-asymmetric (producer-strict, verifier-lenient) conformance model.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.1-2">A producer conforming to this profile (version <code>#1.0</code>) <span class="bcp14">SHOULD NOT</span> emit
+asymmetric conformance model: a producer emits only what this profile
+defines, while a Verifier tolerates unknown additions so that a future
+<code>#1.&lt;minor&gt;</code> revision stays backward compatible (see <a href="#profile-id" class="auto internal xref">Section 3.4.3</a>).<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<div id="conformance-producer">
+<section id="section-3.1.1">
+          <h4 id="name-producer-requirements">
+<a href="#section-3.1.1" class="section-number selfRef">3.1.1. </a><a href="#name-producer-requirements" class="section-name selfRef">Producer requirements</a>
+          </h4>
+<p id="section-3.1.1-1">A producer conforming to this profile (version <code>#1.0</code>) <span class="bcp14">SHOULD NOT</span> emit
 top-level CoRIM keys other than those this profile defines
 (<a href="#corim-id" class="auto internal xref">Section 3.4.1</a>, <a href="#tags-cardinality" class="auto internal xref">Section 3.4.2</a>, <a href="#profile-id" class="auto internal xref">Section 3.4.3</a>, <a href="#rim-validity" class="auto internal xref">Section 3.4.4</a>,
-and the optional base fields below). A producer <span class="bcp14">MUST NOT</span>:<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+and the optional base fields below), and <span class="bcp14">MUST NOT</span>:<a href="#section-3.1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1-3.1">
-            <p id="section-3.1-3.1.1">populate the COSE <code>crit</code> header parameter (<span>[<a href="#RFC9052" class="cite xref">RFC9052</a>]</span>, Section
-3.1) -- any non-empty <code>crit</code> forces the Verifier to reject the
-CoRIM, since by definition it cannot ignore parameters the producer
-has flagged as critical;<a href="#section-3.1-3.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.1.1-2.1">
+              <p id="section-3.1.1-2.1.1">populate the COSE <code>crit</code> header parameter (<span>[<a href="#RFC9052" class="cite xref">RFC9052</a>]</span>, Section 3.1);<a href="#section-3.1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.1-3.2">
-            <p id="section-3.1-3.2.1">declare a <code>/ profile / 3</code> value other than the one defined by this
+            <li class="normal" id="section-3.1.1-2.2">
+              <p id="section-3.1.1-2.2.1">declare a <code>/ profile / 3</code> value other than the one defined by this
 specification, nor rely on any profile mechanism that imposes
-"must-understand" semantics on additional fields;<a href="#section-3.1-3.2.1" class="pilcrow">¶</a></p>
+"must-understand" semantics on additional fields;<a href="#section-3.1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.1-3.3">
-            <p id="section-3.1-3.3.1">place foreign tags in <code>/ tags / 1</code> (CoSWIDs, CoTLs, non-POE CoMIDs),
-non-POE extension keys in the CoMID <code>triples</code>, or any of the
-fields this profile marks "<span class="bcp14">MUST NOT</span> be present" (the CoMID-level
-<code>/ entities / 5</code>, <code>tag-version</code>, the <code>environment.class</code>
-              <code>vendor</code>/<code>model</code>/<code>instance</code>/<code>group</code> fields, and <code>authorized-by</code>;
-see the relevant sections).<a href="#section-3.1-3.3.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.1-2.3">
+              <p id="section-3.1.1-2.3.1">place foreign tags in <code>/ tags / 1</code> (CoSWIDs, CoTLs, non-POE CoMIDs)
+or non-POE extension keys in the CoMID <code>triples</code>; or<a href="#section-3.1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
-        </ul>
-<p id="section-3.1-4">Issuers needing additional semantics <span class="bcp14">MUST</span> publish their own profile
-under their own namespace.<a href="#section-3.1-4" class="pilcrow">¶</a></p>
-<p id="section-3.1-5">A Verifier conforming to this profile <span class="bcp14">MUST</span> ignore top-level CoRIM keys
-it does not recognise (so that a future <code>#1.&lt;minor&gt;</code> revision remains
-backward compatible; see <a href="#profile-id" class="auto internal xref">Section 3.4.3</a>), EXCEPT where the COSE <code>crit</code>
-parameter or one of the "<span class="bcp14">MUST NOT</span> be present" rules above forces
-rejection.<a href="#section-3.1-5" class="pilcrow">¶</a></p>
-<p id="section-3.1-6">Base-CoRIM optional fields permitted by this profile (all informational
-and ignored by the Intel-provided Verifier):<a href="#section-3.1-6" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.1-2.4">
+              <p id="section-3.1.1-2.4.1">emit any field this profile marks "<span class="bcp14">MUST NOT</span> be present": the
+CoMID-level <code>/ entities / 5</code>, <code>tag-version</code>, the <code>environment.class</code>
+                <code>vendor</code>/<code>model</code>/<code>instance</code>/<code>group</code> fields, and
+<code>measurement-map.authorized-by</code> (see the relevant sections).<a href="#section-3.1.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.1.1-3">Issuers needing additional semantics <span class="bcp14">MUST</span> publish their own profile
+under their own namespace.<a href="#section-3.1.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conformance-verifier">
+<section id="section-3.1.2">
+          <h4 id="name-verifier-requirements">
+<a href="#section-3.1.2" class="section-number selfRef">3.1.2. </a><a href="#name-verifier-requirements" class="section-name selfRef">Verifier requirements</a>
+          </h4>
+<p id="section-3.1.2-1">A Verifier conforming to this profile <span class="bcp14">MUST</span> ignore any field it does not
+recognise -- including the producer-prohibited fields above -- EXCEPT
+that it <span class="bcp14">MUST</span> reject a CoRIM carrying:<a href="#section-3.1.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1-7.1">
-            <p id="section-3.1-7.1.1">the CoRIM payload's <code>/ dependent-rims / 2</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section
-4.1.3) -- not fetched or dereferenced; and<a href="#section-3.1-7.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.1.2-2.1">
+              <p id="section-3.1.2-2.1.1">a non-empty COSE <code>crit</code> parameter (it cannot ignore parameters the
+producer has flagged critical);<a href="#section-3.1.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.1-7.2">
-            <p id="section-3.1-7.2.1">the CoRIM-level <code>/ entities / 5</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 4.1.5) -- not
-interpreted.<a href="#section-3.1-7.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.2-2.2">
+              <p id="section-3.1.2-2.2.1">a <code>/ profile / 3</code> mismatch;<a href="#section-3.1.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
-        </ul>
-<p id="section-3.1-8">The CoMID-level <code>/ entities / 5</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 5.1.2) <span class="bcp14">MUST NOT</span>
-be populated. Signer identity is already conveyed by the COSE
-<code>x5chain</code> (<span>[<a href="#RFC9360" class="cite xref">RFC9360</a>]</span>) leaf Subject and by the <code>CWT-Claims</code> <code>iss</code>
-claim (<a href="#signer-metadata" class="auto internal xref">Section 3.2</a>); a third source would only introduce
-drift.<a href="#section-3.1-8" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.2-2.3">
+              <p id="section-3.1.2-2.3.1">a cardinality violation (<a href="#tags-cardinality" class="auto internal xref">Section 3.4.2</a>, <a href="#single-record" class="auto internal xref">Section 4.2</a>); or<a href="#section-3.1.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.2-2.4">
+              <p id="section-3.1.2-2.4.1">a <code>measurement-map.authorized-by</code> (issuer authorisation is conveyed
+by the COSE <code>x5chain</code> trust chain, not by a per-measurement key; see
+<a href="#conditions" class="auto internal xref">Section 4.3</a> and <a href="#endorsements" class="auto internal xref">Section 4.4</a>).<a href="#section-3.1.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.1.2-3">Thus <code>/ entities / 5</code>, <code>tag-version</code>, and the <code>environment.class</code>
+fields are producer-side constraints only; a Verifier ignores them if
+present. The <strong>CoMID-level</strong> <code>/ entities / 5</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 5.1.2) is
+prohibited <em>for producers</em> because signer identity is already conveyed by
+the COSE <code>x5chain</code> (<span>[<a href="#RFC9360" class="cite xref">RFC9360</a>]</span>) leaf Subject and the <code>CWT-Claims</code> <code>iss</code>
+claim (<a href="#signer-metadata" class="auto internal xref">Section 3.2</a>); a third source would only introduce drift.<a href="#section-3.1.2-3" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-4">Base-CoRIM optional fields permitted by this profile (all informational
+and ignored by the Intel-provided Verifier):<a href="#section-3.1.2-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1.2-5.1">
+              <p id="section-3.1.2-5.1.1">the CoRIM payload's <code>/ dependent-rims / 2</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section
+4.1.3) -- not fetched or dereferenced; and<a href="#section-3.1.2-5.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.2-5.2">
+              <p id="section-3.1.2-5.2.1">the <strong>CoRIM-level</strong> <code>/ entities / 5</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 4.1.5) -- not
+interpreted.<a href="#section-3.1.2-5.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
 </section>
 </div>
 <div id="signer-metadata">
@@ -1768,7 +1807,8 @@ profile, and the platform model is determined by the PIID itself --
 a per-instance property rather than a class attribute.<a href="#section-4.3-5" class="pilcrow">¶</a></p>
 <p id="section-4.3-6"><code>measurement-map.authorized-by</code> <span class="bcp14">MUST NOT</span> be present. Issuer
 authorisation is conveyed by the COSE <code>x5chain</code> trust chain, not by a
-per-measurement key.<a href="#section-4.3-6" class="pilcrow">¶</a></p>
+per-measurement key. A Verifier <span class="bcp14">MUST</span> reject a CoRIM in which
+<code>authorized-by</code> is present.<a href="#section-4.3-6" class="pilcrow">¶</a></p>
 <p id="section-4.3-7"><code>measurement-map.mkey</code> (key 0) is <span class="bcp14">RECOMMENDED</span>. When present, it
 <span class="bcp14">SHOULD</span> be the <code>tstr</code> value <code>"tee.poe.platform-binding"</code> -- a
 diagnostic aid that keeps CBOR-diagnostic dumps self-describing.
@@ -1826,7 +1866,8 @@ environment class (version 1) -- encoded as <code>tagged-oid-type</code>
 (CBOR tag 111). This OID is a sibling of the PIID environment OID
 on the conditions side (<code>2.16.840.1.113741.1.13.2.6.1</code>).<a href="#section-4.4-3" class="pilcrow">¶</a></p>
 <p id="section-4.4-4"><code>measurement-map.authorized-by</code> <span class="bcp14">MUST NOT</span> be present, for the same
-reason as in <a href="#conditions" class="auto internal xref">Section 4.3</a>.<a href="#section-4.4-4" class="pilcrow">¶</a></p>
+reason as in <a href="#conditions" class="auto internal xref">Section 4.3</a>; a Verifier <span class="bcp14">MUST</span> likewise reject a CoRIM in
+which it is present.<a href="#section-4.4-4" class="pilcrow">¶</a></p>
 <p id="section-4.4-5"><code>measurement-map.mkey</code> (key 0) is <span class="bcp14">RECOMMENDED</span>. When present, it
 <span class="bcp14">SHOULD</span> be the <code>tstr</code> value <code>"tee.poe.ownership-claims"</code>. As on the
 conditions side, <code>mkey</code> is a diagnostic aid only; appraisal <span class="bcp14">MUST NOT</span>
