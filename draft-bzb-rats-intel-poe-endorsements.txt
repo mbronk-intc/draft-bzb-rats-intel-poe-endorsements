@@ -5,8 +5,8 @@
 Remote ATtestation ProcedureS                                   M. Bronk
 Internet-Draft                                              P. Zmijewski
 Intended status: Informational                                 J. Beaney
-Expires: 11 January 2027                                           Intel
-                                                            10 July 2026
+Expires: 17 January 2027                               Intel Corporation
+                                                            16 July 2026
 
 
     A CoRIM Profile for Intel Platform Ownership Endorsements (POE)
@@ -23,8 +23,8 @@ Abstract
    owner identity -- without trusting the attestation service or any in-
    band claim from the platform itself.
 
-   This memo defines POE as a profile of the Concise Reference Integrity
-   Manifest (CoRIM) data model [CoRIM].
+   This document defines POE as a profile of the Concise Reference
+   Integrity Manifest (CoRIM) data model [CoRIM].
 
 About This Document
 
@@ -54,7 +54,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 11 January 2027.
+   This Internet-Draft will expire on 17 January 2027.
 
 Copyright Notice
 
@@ -390,11 +390,12 @@ Table of Contents
    in the absence of an in-band revocation channel; see Section 7.
 
    This profile sets no normative upper bound on not-after - not-before.
-   Issuers SHOULD keep windows short to bound staleness, and SHOULD re-
-   issue alongside Intel TCB Recovery events so the POE and the PCK
-   certificate ([SGX-PCK]) stay in lock-step.  The Intel generator's
-   default lifetime is P5Y; issuers with a scheduled re-issuance
-   pipeline SHOULD override it to match their cadence.
+   Issuers SHOULD keep windows short to bound staleness, and are
+   recommended to bind refresh to an existing platform lifecycle event
+   -- for example, alongside Intel TCB Recovery events, so the POE and
+   the PCK certificate ([SGX-PCK]) stay in lock-step.  The Intel
+   generator's default lifetime is P5Y; issuers with a scheduled re-
+   issuance pipeline SHOULD override it to match their cadence.
 
    rim-validity is the semantic lifetime of the (PIID, owner) binding
    and is independent of the COSE signing-chain validity.  An issuer MAY
@@ -737,14 +738,23 @@ Table of Contents
 7.3.  Revocation
 
    This profile defines no in-band revocation mechanism for individual
-   POEs.  Issuers MUST limit POE validity windows for their deployment
-   (see Section 3.4.4) and re-issue when the (PIID, Owner) binding
-   changes; a re-issued POE yields a new tag-id whenever the PIID or
-   tee.owner-name changes (see Section 4.1).  Standard COSE signing-
-   chain revocation (CRL, OCSP) applies to the Issuer certificate chain.
-   Intel TCB Recovery events are the natural re-issuance trigger on
-   Intel platforms ([SGX-PCK]) and SHOULD be used to keep POE and PCK
-   collateral in lock-step.
+   POEs.  Issuers MUST bound POE validity windows for their deployment
+   (see Section 3.4.4), and SHOULD refresh a POE before its window
+   elapses; Intel TCB Recovery is a natural refresh trigger on Intel
+   platforms, keeping the POE and PCK certificate in lock-step
+   ([SGX-PCK]).
+
+   A change to the (PIID, Owner) binding requires a new POE, yielding a
+   new tag-id (see Section 4.1); on an ownership change an SGX Factory
+   Reset by the platform operator is also recommended, as the resulting
+   new PIID naturally orphans every POE bound to the prior one
+   ([POE-WHITEPAPER]).
+
+   Standard COSE signing-chain revocation (CRL, OCSP) applies to the
+   Issuer certificate chain.  Issuers can also use their CA layout to
+   scope revocation -- e.g. dedicating an intermediate CA to a fleet,
+   tenant, or issuance batch so one revocation invalidates every POE
+   issued under it.
 
 7.4.  PIID confidentiality
 
@@ -753,6 +763,9 @@ Table of Contents
    binding publicly visible to any party that receives the CoRIM.
    Issuers that distribute POEs to untrusted parties SHOULD consider
    whether this disclosure is acceptable in their threat model.
+
+   Note that an SGX Factory Reset establishes a new PIID
+   ([POE-WHITEPAPER]), bounding that correlation.
 
 8.  IANA Considerations
 
@@ -1153,15 +1166,15 @@ Acknowledgments
 Authors' Addresses
 
    Mateusz Bronk
-   Intel
+   Intel Corporation
    Email: mateusz.bronk@intel.com
 
 
    Piotr Zmijewski
-   Intel
+   Intel Corporation
    Email: piotr.zmijewski@intel.com
 
 
-   James Beaney
-   Intel
+   James D. Beaney
+   Intel Corporation
    Email: james.d.beaney@intel.com
