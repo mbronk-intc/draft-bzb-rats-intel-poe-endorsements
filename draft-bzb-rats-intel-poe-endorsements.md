@@ -229,49 +229,59 @@ A skeleton (CBOR diagnostic notation) is shown in {{fig-skeleton}}.
 ## Conformance constraints {#conformance}
 
 This profile fully defines the structure of a POE CoRIM, and adopts an
-asymmetric (producer-strict, verifier-lenient) conformance model.
+asymmetric conformance model: a producer emits only what this profile
+defines, while a Verifier tolerates unknown additions so that a future
+`#1.<minor>` revision stays backward compatible (see {{profile-id}}).
+
+### Producer requirements {#conformance-producer}
 
 A producer conforming to this profile (version `#1.0`) SHOULD NOT emit
 top-level CoRIM keys other than those this profile defines
 ({{corim-id}}, {{tags-cardinality}}, {{profile-id}}, {{rim-validity}},
-and the optional base fields below). A producer MUST NOT:
+and the optional base fields below), and MUST NOT:
 
-- populate the COSE `crit` header parameter ({{RFC9052}}, Section
-  3.1) -- any non-empty `crit` forces the Verifier to reject the
-  CoRIM, since by definition it cannot ignore parameters the producer
-  has flagged as critical;
+- populate the COSE `crit` header parameter ({{RFC9052}}, Section 3.1);
 - declare a `/ profile / 3` value other than the one defined by this
   specification, nor rely on any profile mechanism that imposes
   "must-understand" semantics on additional fields;
-- place foreign tags in `/ tags / 1` (CoSWIDs, CoTLs, non-POE CoMIDs),
-  non-POE extension keys in the CoMID `triples`, or any of the
-  fields this profile marks "MUST NOT be present" (the CoMID-level
-  `/ entities / 5`, `tag-version`, the `environment.class`
-  `vendor`/`model`/`instance`/`group` fields, and `authorized-by`;
-  see the relevant sections).
+- place foreign tags in `/ tags / 1` (CoSWIDs, CoTLs, non-POE CoMIDs)
+  or non-POE extension keys in the CoMID `triples`; or
+- emit any field this profile marks "MUST NOT be present": the
+  CoMID-level `/ entities / 5`, `tag-version`, the `environment.class`
+  `vendor`/`model`/`instance`/`group` fields, and
+  `measurement-map.authorized-by` (see the relevant sections).
 
 Issuers needing additional semantics MUST publish their own profile
 under their own namespace.
 
-A Verifier conforming to this profile MUST ignore top-level CoRIM keys
-it does not recognise (so that a future `#1.<minor>` revision remains
-backward compatible; see {{profile-id}}), EXCEPT where the COSE `crit`
-parameter or one of the "MUST NOT be present" rules above forces
-rejection.
+### Verifier requirements {#conformance-verifier}
+
+A Verifier conforming to this profile MUST ignore any field it does not
+recognise -- including the producer-prohibited fields above -- EXCEPT
+that it MUST reject a CoRIM carrying:
+
+- a non-empty COSE `crit` parameter (it cannot ignore parameters the
+  producer has flagged critical);
+- a `/ profile / 3` mismatch;
+- a cardinality violation ({{tags-cardinality}}, {{single-record}}); or
+- a `measurement-map.authorized-by` (issuer authorisation is conveyed
+  by the COSE `x5chain` trust chain, not by a per-measurement key; see
+  {{conditions}} and {{endorsements}}).
+
+Thus `/ entities / 5`, `tag-version`, and the `environment.class`
+fields are producer-side constraints only; a Verifier ignores them if
+present. The **CoMID-level** `/ entities / 5` ({{CoRIM}}, Section 5.1.2) is
+prohibited *for producers* because signer identity is already conveyed by
+the COSE `x5chain` ({{RFC9360}}) leaf Subject and the `CWT-Claims` `iss`
+claim ({{signer-metadata}}); a third source would only introduce drift.
 
 Base-CoRIM optional fields permitted by this profile (all informational
 and ignored by the Intel-provided Verifier):
 
 - the CoRIM payload's `/ dependent-rims / 2` ({{CoRIM}}, Section
   4.1.3) -- not fetched or dereferenced; and
-- the CoRIM-level `/ entities / 5` ({{CoRIM}}, Section 4.1.5) -- not
+- the **CoRIM-level** `/ entities / 5` ({{CoRIM}}, Section 4.1.5) -- not
   interpreted.
-
-The CoMID-level `/ entities / 5` ({{CoRIM}}, Section 5.1.2) MUST NOT
-be populated. Signer identity is already conveyed by the COSE
-`x5chain` ({{RFC9360}}) leaf Subject and by the `CWT-Claims` `iss`
-claim ({{signer-metadata}}); a third source would only introduce
-drift.
 
 ## Signer metadata {#signer-metadata}
 
@@ -503,7 +513,8 @@ a per-instance property rather than a class attribute.
 
 `measurement-map.authorized-by` MUST NOT be present. Issuer
 authorisation is conveyed by the COSE `x5chain` trust chain, not by a
-per-measurement key.
+per-measurement key. A Verifier MUST reject a CoRIM in which
+`authorized-by` is present.
 
 `measurement-map.mkey` (key 0) is RECOMMENDED. When present, it
 SHOULD be the `tstr` value `"tee.poe.platform-binding"` -- a
@@ -558,7 +569,8 @@ environment class (version 1) -- encoded as `tagged-oid-type`
 on the conditions side (`2.16.840.1.113741.1.13.2.6.1`).
 
 `measurement-map.authorized-by` MUST NOT be present, for the same
-reason as in {{conditions}}.
+reason as in {{conditions}}; a Verifier MUST likewise reject a CoRIM in
+which it is present.
 
 `measurement-map.mkey` (key 0) is RECOMMENDED. When present, it
 SHOULD be the `tstr` value `"tee.poe.ownership-claims"`. As on the
