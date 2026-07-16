@@ -105,8 +105,8 @@ during appraisal, giving a Relying Party a trustworthy owner identity --
 without trusting the attestation service or any in-band claim from the
 platform itself.
 
-This document defines POE as a profile of the Concise Reference Integrity
-Manifest (CoRIM) data model {{CoRIM}}.
+This document defines POE as a profile of the IETF Concise Reference
+Integrity Manifest (CoRIM) data model.
 
 --- middle
 
