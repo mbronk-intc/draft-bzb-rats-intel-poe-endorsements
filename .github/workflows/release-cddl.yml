@@ -23,27 +23,17 @@ jobs:
     - name: "Checkout"
       uses: actions/checkout@v6
 
-    - name: "Setup"
-      id: setup
-      run: date -u "+date=%FT%T" >>"$GITHUB_OUTPUT"
-
-    - name: "Caching"
-      uses: actions/cache@v5
+    # make check-cddl needs the Ruby cddl gem (absent from the i-d-template image).
+    - name: "Set up Ruby (cddl + cbor-diag)"
+      uses: ruby/setup-ruby@v1
       with:
-        path: |
-          .refcache
-          .venv
-          .gems
-          node_modules
-          .targets.mk
-        key: i-d-${{ steps.setup.outputs.date }}
-        restore-keys: i-d-
+        ruby-version: "3.3"
+
+    - name: "Install cddl + cbor-diag gems"
+      run: gem install --no-document cddl cbor-diag
 
     - name: "Validate CDDL"
-      uses: martinthomson/i-d-template@v1
-      with:
-        make: check-cddl
-        token: ${{ github.token }}
+      run: make check-cddl
 
     - name: "Create Release"
       uses: softprops/action-gh-release@v2
