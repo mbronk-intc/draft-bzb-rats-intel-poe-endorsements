@@ -5,8 +5,8 @@
 Remote ATtestation ProcedureS                                   M. Bronk
 Internet-Draft                                              P. Zmijewski
 Intended status: Informational                                 J. Beaney
-Expires: 17 January 2027                               Intel Corporation
-                                                            16 July 2026
+Expires: 21 January 2027                               Intel Corporation
+                                                            20 July 2026
 
 
     A CoRIM Profile for Intel Platform Ownership Endorsements (POE)
@@ -54,7 +54,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 17 January 2027.
+   This Internet-Draft will expire on 21 January 2027.
 
 Copyright Notice
 
