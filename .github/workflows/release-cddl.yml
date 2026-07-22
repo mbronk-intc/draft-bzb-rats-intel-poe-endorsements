@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: "Checkout"
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     # make check-cddl needs the Ruby cddl gem (absent from the i-d-template image).
     - name: "Set up Ruby (cddl + cbor-diag)"
@@ -36,7 +36,7 @@ jobs:
       run: make check-cddl
 
     - name: "Create Release"
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       if: startsWith(github.ref, 'refs/tags/')
       with:
         token: ${{ secrets.GITHUB_TOKEN }}

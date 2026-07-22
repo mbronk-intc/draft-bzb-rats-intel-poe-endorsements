@@ -19,7 +19,7 @@ jobs:
       contents: write
     steps:
     - name: "Checkout"
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         # Needed for tracing file history for replacement status
         fetch-depth: 0
@@ -34,7 +34,7 @@ jobs:
       run: date -u "+date=%FT%T" >>"$GITHUB_OUTPUT"
 
     - name: "Caching"
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: |
           .refcache
@@ -61,7 +61,7 @@ jobs:
         GITHUB_STEP: upload
 
     - name: "Archive Submitted Drafts"
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       if: always() && steps.build.outcome == 'success'
       with:
         name: published
