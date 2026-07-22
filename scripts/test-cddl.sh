@@ -52,6 +52,8 @@ PAYLOAD_RULE="${PAYLOAD_RULE:-poe-tagged-unsigned-corim-map}"
 golden="$FIXTURES_DIR/poe-golden.cbor"
 fwd="$FIXTURES_DIR/poe-golden-fwdcompat.cbor"
 neg="$FIXTURES_DIR/poe-negative-bare.cbor"
+tstrid="$FIXTURES_DIR/poe-golden-tstr-id.cbor"
+leaf="$FIXTURES_DIR/poe-golden-leaf-only.cbor"
 
 case "${1:-}" in
   -h|--help) grep -E '^#( |$)' "$0" | sed -E 's/^# ?//'; exit 0 ;;
@@ -62,7 +64,7 @@ note() { printf '%s\n' "$*"; }
 ok()   { printf '  OK:   %s\n' "$*"; }
 bad()  { printf '  FAIL: %s\n' "$*"; fail=1; }
 
-for f in "$golden" "$fwd" "$neg"; do
+for f in "$golden" "$fwd" "$neg" "$tstrid" "$leaf"; do
   [[ -f "$f" ]] || { echo "error: missing fixture $f (run 'make fixtures')" >&2; exit 2; }
 done
 
@@ -73,6 +75,10 @@ if command -v "$CORIM_CLI" >/dev/null 2>&1; then
     && ok "golden accepted"            || bad "golden rejected by corim-cli"
   "$CORIM_CLI" validate --skip-expiry "$fwd" >/dev/null 2>&1 \
     && ok "forward-compat accepted"    || bad "forward-compat rejected by corim-cli"
+  "$CORIM_CLI" validate --skip-expiry "$tstrid" >/dev/null 2>&1 \
+    && ok "tstr id/tag-id accepted"    || bad "tstr id/tag-id rejected by corim-cli"
+  "$CORIM_CLI" validate --skip-expiry "$leaf" >/dev/null 2>&1 \
+    && ok "leaf-only x5chain accepted" || bad "leaf-only x5chain rejected by corim-cli"
   if "$CORIM_CLI" validate --skip-expiry "$neg" >/dev/null 2>&1; then
     bad "negative (bare measurement) WRONGLY accepted by corim-cli"
   else
@@ -86,8 +92,13 @@ fi
 # --- Engine 2: pycddl on the extracted CoRIM payload ----------------------------
 if [[ -x "$PYCDDL_PY" ]] && "$PYCDDL_PY" -c 'import pycddl, cbor2' 2>/dev/null; then
   note "pycddl (profile payload structural check):"
+  # NOTE: this engine validates only the extracted CoRIM *payload* (element
+  # [2] of the COSE_Sign1 array). x5chain lives in the unprotected header
+  # (element [1]), so the leaf-only fixture's payload is identical to golden
+  # here -- its bare-bstr shape is exercised solely by corim-cli above. It is
+  # therefore intentionally omitted from this loop.
   PROFILE_CDDL="$PROFILE_CDDL" PAYLOAD_RULE="$PAYLOAD_RULE" \
-  GOLDEN="$golden" FWD="$fwd" NEG="$neg" "$PYCDDL_PY" - <<'PY' || fail=1
+  GOLDEN="$golden" FWD="$fwd" NEG="$neg" TSTRID="$tstrid" "$PYCDDL_PY" - <<'PY' || fail=1
 import os, sys, cbor2, pycddl
 prof = open(os.environ["PROFILE_CDDL"]).read()
 schema = pycddl.Schema("poe-payload-root = %s\n\n%s" % (os.environ["PAYLOAD_RULE"], prof))
@@ -97,6 +108,7 @@ def payload(fn):
 rc = 0
 for label, fn, want_ok in [("golden", os.environ["GOLDEN"], True),
                            ("forward-compat", os.environ["FWD"], True),
+                           ("tstr id/tag-id", os.environ["TSTRID"], True),
                            ("negative", os.environ["NEG"], False)]:
     try:
         schema.validate_cbor(payload(fn)); got_ok = True

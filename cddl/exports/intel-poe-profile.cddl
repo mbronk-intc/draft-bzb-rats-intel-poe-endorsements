@@ -17,6 +17,13 @@
 ; fetches it ad-hoc at check time (optionally cached, git-ignored,
 ; under cddl/imports/) purely as a cross-check aid. It is not
 ; required to parse this file.
+;
+; Scope: PRODUCER (emission) grammar -- closed maps mean "a #1.0
+; producer emits exactly these keys", not "a verifier rejects
+; anything else". Verifier tolerance is normative in the draft's
+; Conformance section (a closed map cannot say "ignore unknowns
+; EXCEPT one key"). The lone forward-compat socket here is the
+; top-level `* (int / tstr) => any` on the unsigned CoRIM map.
 ; ============================================================
 
 ; --- Profile-private extension keys. Identifiers and the
@@ -44,13 +51,13 @@ $tee-platform-instance-id-type /= bstr .size 32
 $tee-owner-name-type           /= tstr .size (1..1024)
 
 ; --- Borrowed base aliases (definitions appear in [COSE] /
-; --- [CoRIM]; restated locally for self-containment).
-; --- `cose-label` is value-identical to base CoRIM's
-; --- `cose-label` (int / tstr), so this restatement is a benign
-; --- identical redefinition when composed with base or the
-; --- Intel grammar.
+; --- [CoRIM]; restated locally for self-containment). Both are
+; --- value-identical to base CoRIM (`cose-label` = int / tstr;
+; --- `uuid-type` = bytes .size 16), so each is a benign identical
+; --- redefinition when composed with base or the Intel grammar.
 
-cose-label                = int / tstr
+cose-label = int / tstr
+uuid-type  = bytes .size 16   ; untagged UUID (any version)
 
 ; --- Profile identifier (RFC 4151 tag URI).
 
@@ -104,7 +111,12 @@ poe-signer-map = {
 ; --- Unprotected header
 
 poe-unprotected-header-map = {
-  33 => [ 2*bstr ],                 ; x5chain (at least leaf+1)
+  33 => bstr / [ 2*bstr ],           ; x5chain (COSE_X509, [RFC9360]): leaf-first.
+                                    ; One cert => bare bstr; two-or-more => array.
+                                    ; Every intermediate CA MUST be present; only
+                                    ; the root MAY be omitted. Dropping the root
+                                    ; from a 2-cert chain leaves one cert, encoded
+                                    ; as the bare bstr -- not a 1-element array.
   * cose-label => any
 }
 
@@ -115,7 +127,7 @@ poe-unprotected-header-map = {
 poe-tagged-unsigned-corim-map = #6.501(poe-unsigned-corim-map)
 
 poe-unsigned-corim-map = {
-  0 => bstr .size 16,               ; id (UUIDv8, untagged)
+  0 => uuid-type / tstr,             ; id (SHOULD UUIDv8; MAY tstr)
   1 => [ poe-tagged-concise-mid-tag ],   ; tags: exactly one
   3 => poe-profile-id,              ; profile (tstr; see Profile)
   4 => poe-validity-map,            ; rim-validity (REQUIRED)
@@ -123,7 +135,8 @@ poe-unsigned-corim-map = {
                                     ; informational, verifier-ignored
   ? 5 => [ + any ],                 ; entities (CoRIM-level):
                                     ; optional, verifier-ignored
-  ; forward-compat: keys unknown in #1.0. Verifiers MUST ignore;
+  ; Sole forward-compat socket in this producer grammar (see header
+  ; Scope note). Keys unknown in #1.0: verifiers MUST ignore;
   ; producers conforming to #1.0 SHOULD NOT emit (see Conformance).
   * (int / tstr) => any
 }
@@ -147,7 +160,7 @@ poe-concise-mid-tag-map = {
 }
 
 poe-tag-identity-map = {
-  0 => bstr .size 16,               ; tag-id (UUIDv8, untagged)
+  0 => uuid-type / tstr,             ; tag-id (SHOULD UUIDv8; MAY tstr)
   ; (no tag-version/1 -- see Conformance)
 }
 

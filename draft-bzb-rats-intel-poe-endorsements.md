@@ -233,6 +233,12 @@ asymmetric conformance model: a producer emits only what this profile
 defines, while a Verifier tolerates unknown additions so that a future
 `#1.<minor>` revision stays backward compatible (see {{profile-id}}).
 
+The accompanying CDDL ({{cddl}}) is a *producer* (emission) grammar: its
+closed maps state what a conformant `#1.0` producer emits, not what a
+Verifier rejects. Verifier tolerance is normative in this section and is
+not expressible in CDDL, as a closed map cannot admit unknown members
+while still constraining the known ones.
+
 ### Producer requirements {#conformance-producer}
 
 A producer conforming to this profile (version `#1.0`) SHOULD NOT emit
@@ -314,6 +320,15 @@ identity in `x5chain`. Signature lifetime is conveyed by the
 `x5chain` ({{rim-validity}}); the CWT `nbf` (key 5) and `exp` (key 4)
 claims ({{RFC8392}}) -- and, if `corim-meta` is present, its
 `signature-validity` field -- MUST NOT be present.
+
+The `x5chain` ({{RFC9360}}) is a `COSE_X509` value, ordered leaf-first:
+a single certificate is carried as a bare `bstr`, two or more as a CBOR
+array (`[ 2*bstr ]`). It MUST carry the leaf (end-entity) signing
+certificate and every intermediate CA in the path; only the self-signed
+root MAY be omitted -- to save bytes when the Verifier holds it out of
+band. Omitting the root from a two-certificate chain leaves a single
+certificate, which is then carried in the bare-`bstr` form (a
+one-element array is not a valid `COSE_X509`).
 
 ## Refresh URI {#refresh-uri}
 
