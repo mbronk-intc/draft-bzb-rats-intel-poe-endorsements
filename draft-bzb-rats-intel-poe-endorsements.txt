@@ -5,8 +5,8 @@
 Remote ATtestation ProcedureS                                   M. Bronk
 Internet-Draft                                              P. Zmijewski
 Intended status: Informational                                 J. Beaney
-Expires: 21 January 2027                               Intel Corporation
-                                                            20 July 2026
+Expires: 23 January 2027                               Intel Corporation
+                                                            22 July 2026
 
 
     A CoRIM Profile for Intel Platform Ownership Endorsements (POE)
@@ -54,7 +54,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 21 January 2027.
+   This Internet-Draft will expire on 23 January 2027.
 
 Copyright Notice
 
@@ -232,6 +232,12 @@ Table of Contents
    a future #1.<minor> revision stays backward compatible (see
    Section 3.4.3).
 
+   The accompanying CDDL (Appendix A) is a _producer_ (emission)
+   grammar: its closed maps state what a conformant #1.0 producer emits,
+   not what a Verifier rejects.  Verifier tolerance is normative in this
+   section and is not expressible in CDDL, as a closed map cannot admit
+   unknown members while still constraining the known ones.
+
 3.1.1.  Producer requirements
 
    A producer conforming to this profile (version #1.0) SHOULD NOT emit
@@ -320,6 +326,15 @@ Table of Contents
    (Section 3.4.4); the CWT nbf (key 5) and exp (key 4) claims
    ([RFC8392]) -- and, if corim-meta is present, its signature-validity
    field -- MUST NOT be present.
+
+   The x5chain ([RFC9360]) is a COSE_X509 value, ordered leaf-first: a
+   single certificate is carried as a bare bstr, two or more as a CBOR
+   array ([ 2*bstr ]).  It MUST carry the leaf (end-entity) signing
+   certificate and every intermediate CA in the path; only the self-
+   signed root MAY be omitted -- to save bytes when the Verifier holds
+   it out of band.  Omitting the root from a two-certificate chain
+   leaves a single certificate, which is then carried in the bare-bstr
+   form (a one-element array is not a valid COSE_X509).
 
 3.3.  Refresh URI
 
@@ -970,6 +985,13 @@ Appendix A.  CDDL
    ; fetches it ad-hoc at check time (optionally cached, git-ignored,
    ; under cddl/imports/) purely as a cross-check aid. It is not
    ; required to parse this file.
+   ;
+   ; Scope: PRODUCER (emission) grammar -- closed maps mean "a #1.0
+   ; producer emits exactly these keys", not "a verifier rejects
+   ; anything else". Verifier tolerance is normative in the draft's
+   ; Conformance section (a closed map cannot say "ignore unknowns
+   ; EXCEPT one key"). The lone forward-compat socket here is the
+   ; top-level `* (int / tstr) => any` on the unsigned CoRIM map.
    ; ============================================================
 
    ; --- Profile-private extension keys. Identifiers and the
@@ -997,13 +1019,13 @@ Appendix A.  CDDL
    $tee-owner-name-type           /= tstr .size (1..1024)
 
    ; --- Borrowed base aliases (definitions appear in [COSE] /
-   ; --- [CoRIM]; restated locally for self-containment).
-   ; --- `cose-label` is value-identical to base CoRIM's
-   ; --- `cose-label` (int / tstr), so this restatement is a benign
-   ; --- identical redefinition when composed with base or the
-   ; --- Intel grammar.
+   ; --- [CoRIM]; restated locally for self-containment). Both are
+   ; --- value-identical to base CoRIM (`cose-label` = int / tstr;
+   ; --- `uuid-type` = bytes .size 16), so each is a benign identical
+   ; --- redefinition when composed with base or the Intel grammar.
 
-   cose-label                = int / tstr
+   cose-label = int / tstr
+   uuid-type  = bytes .size 16   ; untagged UUID (any version)
 
    ; --- Profile identifier (RFC 4151 tag URI).
 
@@ -1057,7 +1079,12 @@ Appendix A.  CDDL
    ; --- Unprotected header
 
    poe-unprotected-header-map = {
-     33 => [ 2*bstr ],                 ; x5chain (at least leaf+1)
+     33 => bstr / [ 2*bstr ],           ; x5chain (COSE_X509, [RFC9360]): leaf-first.
+                                       ; One cert => bare bstr; two-or-more => array.
+                                       ; Every intermediate CA MUST be present; only
+                                       ; the root MAY be omitted. Dropping the root
+                                       ; from a 2-cert chain leaves one cert, encoded
+                                       ; as the bare bstr -- not a 1-element array.
      * cose-label => any
    }
 
@@ -1068,7 +1095,7 @@ Appendix A.  CDDL
    poe-tagged-unsigned-corim-map = #6.501(poe-unsigned-corim-map)
 
    poe-unsigned-corim-map = {
-     0 => bstr .size 16,               ; id (UUIDv8, untagged)
+     0 => uuid-type / tstr,             ; id (SHOULD UUIDv8; MAY tstr)
      1 => [ poe-tagged-concise-mid-tag ],   ; tags: exactly one
      3 => poe-profile-id,              ; profile (tstr; see Profile)
      4 => poe-validity-map,            ; rim-validity (REQUIRED)
@@ -1076,7 +1103,8 @@ Appendix A.  CDDL
                                        ; informational, verifier-ignored
      ? 5 => [ + any ],                 ; entities (CoRIM-level):
                                        ; optional, verifier-ignored
-     ; forward-compat: keys unknown in #1.0. Verifiers MUST ignore;
+     ; Sole forward-compat socket in this producer grammar (see header
+     ; Scope note). Keys unknown in #1.0: verifiers MUST ignore;
      ; producers conforming to #1.0 SHOULD NOT emit (see Conformance).
      * (int / tstr) => any
    }
@@ -1100,7 +1128,7 @@ Appendix A.  CDDL
    }
 
    poe-tag-identity-map = {
-     0 => bstr .size 16,               ; tag-id (UUIDv8, untagged)
+     0 => uuid-type / tstr,             ; tag-id (SHOULD UUIDv8; MAY tstr)
      ; (no tag-version/1 -- see Conformance)
    }
 
