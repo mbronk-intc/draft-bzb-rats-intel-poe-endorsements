@@ -1,0 +1,2634 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>A CoRIM Profile for Intel Platform Ownership Endorsements (POE)</title>
+<meta content="Mateusz Bronk" name="author">
+<meta content="Piotr Zmijewski" name="author">
+<meta content="James D. Beaney" name="author">
+<meta content="
+       A Platform Ownership Endorsement (POE) is a signed statement that a
+specific Intel confidential-computing platform instance, identified by
+its Platform Instance Identity (PIID), belongs to a named owner. POEs
+let a Verifier bind the attested hardware identity from an Intel SGX
+or TDX platform to an operational owner (e.g., a Cloud Service Provider)
+during appraisal, giving a Relying Party a trustworthy owner identity --
+without trusting the attestation service or any in-band claim from the
+platform itself. 
+       This document defines POE as a profile of the IETF Concise Reference
+Integrity Manifest (CoRIM) data model. 
+    " name="description">
+<meta content="xml2rfc 3.34.0" name="generator">
+<meta content="attestation" name="keyword">
+<meta content="corim" name="keyword">
+<meta content="endorsement" name="keyword">
+<meta content="ownership" name="keyword">
+<meta content="sgx" name="keyword">
+<meta content="tdx" name="keyword">
+<meta content="draft-bzb-rats-intel-poe-endorsements-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.34.0
+    Python 3.14.5
+    ConfigArgParse 1.7.5
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.10.1
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.8.2
+-->
+<link href="draft-bzb-rats-intel-poe-endorsements.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">Intel POE CoRIM Profile</td>
+<td class="right">July 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Bronk, et al.</td>
+<td class="center">Expires 24 January 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Remote ATtestation ProcedureS</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-bzb-rats-intel-poe-endorsements-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-07-23" class="published">23 July 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Informational</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-01-24">24 January 2027</time></dd>
+<dt class="label-authors">Authors:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">M. Bronk</div>
+<div class="org">Intel Corporation</div>
+</div>
+<div class="author">
+      <div class="author-name">P. Zmijewski</div>
+<div class="org">Intel Corporation</div>
+</div>
+<div class="author">
+      <div class="author-name">J. Beaney</div>
+<div class="org">Intel Corporation</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">A CoRIM Profile for Intel Platform Ownership Endorsements (POE)</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">A Platform Ownership Endorsement (POE) is a signed statement that a
+specific Intel confidential-computing platform instance, identified by
+its Platform Instance Identity (PIID), belongs to a named owner. POEs
+let a Verifier bind the attested hardware identity from an Intel SGX
+or TDX platform to an operational owner (e.g., a Cloud Service Provider)
+during appraisal, giving a Relying Party a trustworthy owner identity --
+without trusting the attestation service or any in-band claim from the
+platform itself.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">This document defines POE as a profile of the IETF Concise Reference
+Integrity Manifest (CoRIM) data model.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://mbronk-intc.github.io/draft-bzb-rats-intel-poe-endorsements/draft-bzb-rats-intel-poe-endorsements.html">https://mbronk-intc.github.io/draft-bzb-rats-intel-poe-endorsements/draft-bzb-rats-intel-poe-endorsements.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-bzb-rats-intel-poe-endorsements/">https://datatracker.ietf.org/doc/draft-bzb-rats-intel-poe-endorsements/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/mbronk-intc/draft-bzb-rats-intel-poe-endorsements">https://github.com/mbronk-intc/draft-bzb-rats-intel-poe-endorsements</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 24 January 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-scope-poe-specific-not-an-i" class="internal xref">Scope: POE-specific, not an Intel umbrella profile</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-profile-shape-at-a-glance" class="internal xref">Profile shape at a glance</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-profile-overview" class="internal xref">Profile Overview</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-conformance-constraints" class="internal xref">Conformance constraints</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.1">
+                    <p id="section-toc.1-1.3.2.1.2.1.1"><a href="#section-3.1.1" class="auto internal xref">3.1.1</a>.  <a href="#name-producer-requirements" class="internal xref">Producer requirements</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.2">
+                    <p id="section-toc.1-1.3.2.1.2.2.1"><a href="#section-3.1.2" class="auto internal xref">3.1.2</a>.  <a href="#name-verifier-requirements" class="internal xref">Verifier requirements</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-signer-metadata" class="internal xref">Signer metadata</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-refresh-uri" class="internal xref">Refresh URI</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
+                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-corim-level-fields" class="internal xref">CoRIM-level fields</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.1">
+                    <p id="section-toc.1-1.3.2.4.2.1.1"><a href="#section-3.4.1" class="auto internal xref">3.4.1</a>.  <a href="#name-identifier" class="internal xref">Identifier</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.2">
+                    <p id="section-toc.1-1.3.2.4.2.2.1"><a href="#section-3.4.2" class="auto internal xref">3.4.2</a>.  <a href="#name-tags-cardinality" class="internal xref">Tags cardinality</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.3">
+                    <p id="section-toc.1-1.3.2.4.2.3.1"><a href="#section-3.4.3" class="auto internal xref">3.4.3</a>.  <a href="#name-profile" class="internal xref">Profile</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.4">
+                    <p id="section-toc.1-1.3.2.4.2.4.1"><a href="#section-3.4.4" class="auto internal xref">3.4.4</a>.  <a href="#name-validity" class="internal xref">Validity</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-poe-comid-encoding" class="internal xref">POE CoMID Encoding</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-tag-identity" class="internal xref">Tag Identity</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-single-record-cardinality" class="internal xref">Single-record cardinality</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-conditions-clause" class="internal xref">Conditions clause</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
+                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-endorsements-clause" class="internal xref">Endorsements clause</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.5">
+                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-extension-claims" class="internal xref">Extension claims</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-complete-example" class="internal xref">Complete Example</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-implementation-status" class="internal xref">Implementation Status</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-issuer-trust" class="internal xref">Issuer trust</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-issuer-is-not-necessarily-o" class="internal xref">Issuer is not necessarily Owner</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-revocation" class="internal xref">Revocation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
+                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-piid-confidentiality" class="internal xref">PIID confidentiality</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-cddl" class="internal xref">CDDL</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">Remote attestation Evidence produced by an Intel SGX or TDX platform
+carries cryptographic identifiers (e.g., the Platform Provisioning ID
+or the per-instance PIID) but does not, by itself, identify the
+operational owner of the platform. In practice, Relying Parties often
+need to answer the question "is this attested platform operated by the
+Cloud Service Provider that claims to host my workload?" -- a question
+that the attestation pipeline alone cannot answer.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">A Platform Ownership Endorsement (POE) is a signed Endorsement (in
+the sense of <span>[<a href="#RATS-ARCH" class="cite xref">RATS-ARCH</a>]</span>), issued out of band of the attestation
+flow, that binds a specific platform instance (named by its PIID) to a
+named owner. The Verifier (the Attestation Verifier in
+<span>[<a href="#POE-WHITEPAPER" class="cite xref">POE-WHITEPAPER</a>]</span>) consumes a POE alongside Evidence: when the bound
+PIID matches the PIID in Evidence, the owner-identity claim is added
+to the Verifier's Appraisal Claims Set.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This document specifies how POEs are encoded as a profile of the CoRIM
+data model <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>. The profile pins a single
+<code>conditional-endorsement-triple-record</code> per CoMID whose condition
+matches the Attester's PIID and whose endorsement carries the owner
+identity.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">Background, threat model, and operational context for POE are
+described in <span>[<a href="#POE-WHITEPAPER" class="cite xref">POE-WHITEPAPER</a>]</span>.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<div id="why-poe-specific">
+<section id="section-1.1">
+        <h3 id="name-scope-poe-specific-not-an-i">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-scope-poe-specific-not-an-i" class="section-name selfRef">Scope: POE-specific, not an Intel umbrella profile</a>
+        </h3>
+<p id="section-1.1-1">This profile covers POEs only. POEs are signed by platform owners,
+CSPs, or fleet managers -- not by Intel -- and their trust anchors,
+appraisal policies, and revocation channels are disjoint from those
+of Intel-signed reference-value endorsements for the platform TCB
+(e.g. TCB Info, TD Identity), which are likely to be carried under a single
+(separate), Intel-issued CoRIM profile (<span>[<a href="#INTEL-PROFILE" class="cite xref">INTEL-PROFILE</a>]</span>). Partitioning by trust domain lets a
+Verifier key appraisal off <code>/ profile / 3</code> directly. Future
+POE-issuer-signed claim kinds remain in-scope under this same URI,
+distinguished by <code>environment.class.class-id</code>.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="profile-shape-at-a-glance">
+<section id="section-1.2">
+        <h3 id="name-profile-shape-at-a-glance">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-profile-shape-at-a-glance" class="section-name selfRef">Profile shape at a glance</a>
+        </h3>
+<p id="section-1.2-1">A POE CoRIM differs from base CoRIM <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span> in three ways:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-1.2-2">
+<li id="section-1.2-2.1">
+            <p id="section-1.2-2.1.1">POE binds an <em>owner identity</em> to a platform, not measurements of
+firmware components; the conditional-endorsement-triple form is
+used rather than reference-triples.<a href="#section-1.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-1.2-2.2">
+            <p id="section-1.2-2.2.1">Exactly one CoMID per CoRIM, and exactly one (condition,
+endorsement) pair per CoMID (<a href="#single-record" class="auto internal xref">Section 4.2</a>); multiple owner
+bindings are carried as separate CoRIMs.<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-1.2-2.3">
+            <p id="section-1.2-2.3.1">PIID is carried as a profile-private extension claim inside the
+condition of the conditional-endorsement triple (<a href="#conditions" class="auto internal xref">Section 4.3</a>),
+not as a subject-side identity in the base CoRIM <code>environment</code>
+map's <code>instance</code> field (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>). In a POE the platform identity
+functions as a <em>predicate</em>: the owner endorsement applies precisely
+when the Attester's Evidence presents the bound PIID.<a href="#section-1.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">Familiarity with the CoRIM data model <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span> and the RATS
+architecture <span>[<a href="#RATS-ARCH" class="cite xref">RATS-ARCH</a>]</span> is assumed.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<p id="section-2-3">The following terms are used throughout this document:<a href="#section-2-3" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-4">
+        <dt id="section-2-4.1">PIID:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.2">
+          <p id="section-2-4.2.1">Platform Instance Identity -- a per-instance identifier carried in
+Intel SGX and TDX attestation Evidence. The identifier is a byte
+string of 16 or 32 bytes.<a href="#section-2-4.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.3">Owner:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.4">
+          <p id="section-2-4.4.1">The operational entity that controls the platform identified by a
+given PIID (the Platform Owner in <span>[<a href="#POE-WHITEPAPER" class="cite xref">POE-WHITEPAPER</a>]</span>). The Owner is
+named in the endorsement; it <span class="bcp14">MAY</span> differ from the entity that signs
+the enclosing CoRIM (the Issuer).<a href="#section-2-4.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.5">Issuer:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.6">
+          <p id="section-2-4.6.1">The party that signs the CoRIM (termed the Platform Endorser in
+<span>[<a href="#POE-WHITEPAPER" class="cite xref">POE-WHITEPAPER</a>]</span>). The Issuer vouches for the (PIID, Owner)
+binding by signing it.<a href="#section-2-4.6.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="profile-overview">
+<section id="section-3">
+      <h2 id="name-profile-overview">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-profile-overview" class="section-name selfRef">Profile Overview</a>
+      </h2>
+<p id="section-3-1">A POE CoRIM is a COSE_Sign1 envelope <span>[<a href="#RFC9052" class="cite xref">RFC9052</a>]</span> whose payload is a
+CoRIM map. The CoRIM carries exactly one CoMID containing exactly one
+<code>conditional-endorsement-triple-record</code>. The triple has:<a href="#section-3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3-2.1">
+          <p id="section-3-2.1.1">a <code>conditions</code> clause naming the target environment class (an Intel
+platform) and the PIID the endorsement is bound to; and<a href="#section-3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-3-2.2">
+          <p id="section-3-2.2.1">an <code>endorsements - additions</code> clause carrying the Owner identity
+claim.<a href="#section-3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-3-3">A skeleton (CBOR diagnostic notation) is shown in <a href="#fig-skeleton" class="auto internal xref">Figure 1</a>.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<span id="name-poe-corim-comid-skeleton"></span><div id="fig-skeleton">
+<figure id="figure-1">
+        <div class="lang-cbor-diag sourcecode" id="section-3-4.1">
+<pre>
+/ corim-map / {
+  / id           / 0 : ...,            ; per-instance identifier
+  / tags         / 1 : [ &lt;&lt; concise-mid-tag &gt;&gt; ],
+  / profile      / 3 : "tag:intel.com,2026:tee.poe#1.0",
+  / rim-validity / 4 : { ... }         ; endorsement validity window
+}
+
+/ concise-mid-tag / {
+  / tag-identity / 1 : { ... },
+  / triples      / 4 : {
+    / conditional-endorsement-triples / 10 : [
+      [
+        / conditions               / [ ... ],
+        / endorsements - additions / [ ... ]
+      ]
+    ]
+  }
+}
+</pre>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-poe-corim-comid-skeleton" class="selfRef">POE CoRIM/CoMID skeleton</a>
+        </figcaption></figure>
+</div>
+<div id="conformance">
+<section id="section-3.1">
+        <h3 id="name-conformance-constraints">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-conformance-constraints" class="section-name selfRef">Conformance constraints</a>
+        </h3>
+<p id="section-3.1-1">This profile fully defines the structure of a POE CoRIM, and adopts an
+asymmetric conformance model: a producer emits only what this profile
+defines, while a Verifier tolerates unknown additions so that a future
+<code>#1.&lt;minor&gt;</code> revision stays backward compatible (see <a href="#profile-id" class="auto internal xref">Section 3.4.3</a>).<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-2">The accompanying CDDL (<a href="#cddl" class="auto internal xref">Appendix A</a>) is a <em>producer</em> (emission) grammar: its
+closed maps state what a conformant <code>#1.0</code> producer emits, not what a
+Verifier rejects. Verifier tolerance is normative in this section and is
+not expressible in CDDL, as a closed map cannot admit unknown members
+while still constraining the known ones.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+<div id="conformance-producer">
+<section id="section-3.1.1">
+          <h4 id="name-producer-requirements">
+<a href="#section-3.1.1" class="section-number selfRef">3.1.1. </a><a href="#name-producer-requirements" class="section-name selfRef">Producer requirements</a>
+          </h4>
+<p id="section-3.1.1-1">A producer conforming to this profile (version <code>#1.0</code>) <span class="bcp14">SHOULD NOT</span> emit
+top-level CoRIM keys other than those this profile defines
+(<a href="#corim-id" class="auto internal xref">Section 3.4.1</a>, <a href="#tags-cardinality" class="auto internal xref">Section 3.4.2</a>, <a href="#profile-id" class="auto internal xref">Section 3.4.3</a>, <a href="#rim-validity" class="auto internal xref">Section 3.4.4</a>,
+and the optional base fields below), and <span class="bcp14">MUST NOT</span>:<a href="#section-3.1.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1.1-2.1">
+              <p id="section-3.1.1-2.1.1">populate the COSE <code>crit</code> header parameter (<span>[<a href="#RFC9052" class="cite xref">RFC9052</a>]</span>, Section 3.1);<a href="#section-3.1.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.1-2.2">
+              <p id="section-3.1.1-2.2.1">declare a <code>/ profile / 3</code> value other than the one defined by this
+specification, nor rely on any profile mechanism that imposes
+"must-understand" semantics on additional fields;<a href="#section-3.1.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.1-2.3">
+              <p id="section-3.1.1-2.3.1">place foreign tags in <code>/ tags / 1</code> (CoSWIDs, CoTLs, non-POE CoMIDs)
+or non-POE extension keys in the CoMID <code>triples</code>; or<a href="#section-3.1.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.1-2.4">
+              <p id="section-3.1.1-2.4.1">emit any field this profile marks "<span class="bcp14">MUST NOT</span> be present": the
+CoMID-level <code>/ entities / 5</code>, <code>tag-version</code>, the <code>environment.class</code>
+                <code>vendor</code>/<code>model</code>/<code>instance</code>/<code>group</code> fields, and
+<code>measurement-map.authorized-by</code> (see the relevant sections).<a href="#section-3.1.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.1.1-3">Issuers needing additional semantics <span class="bcp14">MUST</span> publish their own profile
+under their own namespace.<a href="#section-3.1.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conformance-verifier">
+<section id="section-3.1.2">
+          <h4 id="name-verifier-requirements">
+<a href="#section-3.1.2" class="section-number selfRef">3.1.2. </a><a href="#name-verifier-requirements" class="section-name selfRef">Verifier requirements</a>
+          </h4>
+<p id="section-3.1.2-1">A Verifier conforming to this profile <span class="bcp14">MUST</span> ignore any field it does not
+recognise -- including the producer-prohibited fields above -- EXCEPT
+that it <span class="bcp14">MUST</span> reject a CoRIM carrying:<a href="#section-3.1.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1.2-2.1">
+              <p id="section-3.1.2-2.1.1">a non-empty COSE <code>crit</code> parameter (it cannot ignore parameters the
+producer has flagged critical);<a href="#section-3.1.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.2-2.2">
+              <p id="section-3.1.2-2.2.1">a <code>/ profile / 3</code> mismatch;<a href="#section-3.1.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.2-2.3">
+              <p id="section-3.1.2-2.3.1">a cardinality violation (<a href="#tags-cardinality" class="auto internal xref">Section 3.4.2</a>, <a href="#single-record" class="auto internal xref">Section 4.2</a>); or<a href="#section-3.1.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.2-2.4">
+              <p id="section-3.1.2-2.4.1">a <code>measurement-map.authorized-by</code> (issuer authorisation is conveyed
+by the COSE <code>x5chain</code> trust chain, not by a per-measurement key; see
+<a href="#conditions" class="auto internal xref">Section 4.3</a> and <a href="#endorsements" class="auto internal xref">Section 4.4</a>).<a href="#section-3.1.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.1.2-3">Thus <code>/ entities / 5</code>, <code>tag-version</code>, and the <code>environment.class</code>
+fields are producer-side constraints only; a Verifier ignores them if
+present. The <strong>CoMID-level</strong> <code>/ entities / 5</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 5.1.2) is
+prohibited <em>for producers</em> because signer identity is already conveyed by
+the COSE <code>x5chain</code> (<span>[<a href="#RFC9360" class="cite xref">RFC9360</a>]</span>) leaf Subject and the <code>CWT-Claims</code> <code>iss</code>
+claim (<a href="#signer-metadata" class="auto internal xref">Section 3.2</a>); a third source would only introduce drift.<a href="#section-3.1.2-3" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-4">Base-CoRIM optional fields permitted by this profile (all informational
+and ignored by the Intel-provided Verifier):<a href="#section-3.1.2-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1.2-5.1">
+              <p id="section-3.1.2-5.1.1">the CoRIM payload's <code>/ dependent-rims / 2</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section
+4.1.3) -- not fetched or dereferenced; and<a href="#section-3.1.2-5.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.2-5.2">
+              <p id="section-3.1.2-5.2.1">the <strong>CoRIM-level</strong> <code>/ entities / 5</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 4.1.5) -- not
+interpreted.<a href="#section-3.1.2-5.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="signer-metadata">
+<section id="section-3.2">
+        <h3 id="name-signer-metadata">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-signer-metadata" class="section-name selfRef">Signer metadata</a>
+        </h3>
+<p id="section-3.2-1">Signer metadata is carried in the COSE protected header using the
+<code>CWT-Claims</code> header parameter (label 15, <span>[<a href="#RFC9597" class="cite xref">RFC9597</a>]</span>). The parameter
+value is a CBOR map of CWT claims (<span>[<a href="#RFC8392" class="cite xref">RFC8392</a>]</span>) carried directly,
+not wrapped in a byte string (unlike <code>corim-meta</code>). This profile
+populates a single claim, the issuer (<code>iss</code>, CWT claim key 1), set to
+a human-readable signer identity. The Intel generator emits only
+<code>CWT-Claims</code> and no other CWT claim; per <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-corim-10#section-4.2.2" class="relref">Section 4.2.2</a> of [<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>
+the <code>CWT-Claims</code> map <span class="bcp14">MUST NOT</span> carry claims that semantically overlap
+CoRIM tag content.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">CoRIM positions the legacy <code>corim-meta</code> header parameter (label 8) as
+an alternative to <code>CWT-Claims</code> (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-corim-10#section-4.2.1" class="relref">Section 4.2.1</a> of [<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>); the
+<code>meta-group</code> grammar admits either parameter. This profile tightens
+that to require <code>CWT-Claims</code>, with <code>corim-meta</code> permitted only as an
+optional legacy addition. A producer <span class="bcp14">MAY</span>
+additionally include <code>corim-meta</code> for interoperability with verifiers
+that read only that parameter; when both are present, <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-corim-10#section-4.2.1" class="relref">Section 4.2.1</a> of [<a href="#CoRIM" class="cite xref">CoRIM</a>]</span> requires their contents to be semantically identical -- the
+<code>CWT-Claims</code> <code>iss</code> <span class="bcp14">MUST</span> equal <code>corim-meta</code>'s <code>signer-name</code>. The
+Intel-provided Verifier reads signer metadata from <code>CWT-Claims</code> only
+and ignores <code>corim-meta</code> if present.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-3">The <code>iss</code> value <span class="bcp14">SHOULD</span> match the leaf signing certificate's Subject
+Common Name (<span>[<a href="#RFC5280" class="cite xref">RFC5280</a>]</span>, Section 4.1.2.6) so the human-readable
+signer label cannot be decoupled from the cryptographically-bound
+identity in <code>x5chain</code>. Signature lifetime is conveyed by the
+<code>x5chain</code> (<a href="#rim-validity" class="auto internal xref">Section 3.4.4</a>); the CWT <code>nbf</code> (key 5) and <code>exp</code> (key 4)
+claims (<span>[<a href="#RFC8392" class="cite xref">RFC8392</a>]</span>) -- and, if <code>corim-meta</code> is present, its
+<code>signature-validity</code> field -- <span class="bcp14">MUST NOT</span> be present.<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+<p id="section-3.2-4">The <code>x5chain</code> (<span>[<a href="#RFC9360" class="cite xref">RFC9360</a>]</span>) is a <code>COSE_X509</code> value, ordered leaf-first:
+a single certificate is carried as a bare <code>bstr</code>, two or more as a CBOR
+array (<code>[ 2*bstr ]</code>). It <span class="bcp14">MUST</span> carry the leaf (end-entity) signing
+certificate and every intermediate CA in the path; only the self-signed
+root <span class="bcp14">MAY</span> be omitted -- to save bytes when the Verifier holds it out of
+band. Omitting the root from a two-certificate chain leaves a single
+certificate, which is then carried in the bare-<code>bstr</code> form (a
+one-element array is not a valid <code>COSE_X509</code>).<a href="#section-3.2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="refresh-uri">
+<section id="section-3.3">
+        <h3 id="name-refresh-uri">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-refresh-uri" class="section-name selfRef">Refresh URI</a>
+        </h3>
+<p id="section-3.3-1">This profile defines one optional COSE protected-header parameter,
+<code>tee.refresh-uri</code>, a forward-pointer to where a fresh POE for this
+platform can be retrieved. It is carried through the protected header's
+<code>cose-label =&gt; cose-value</code> extension point under the text label
+<code>"tee.refresh-uri"</code> (a text label in the broader <code>tee.*</code> namespace,
+deliberately not POE-specific, since manifest refresh is a generic
+capability). The value is a <code>uri</code> (<code>#6.32(tstr)</code>, matching CoRIM's
+<code>uri</code> type): a single absolute URI (<span>[<a href="#RFC3986" class="cite xref">RFC3986</a>]</span>) of at most 1024
+bytes, whose scheme <span class="bcp14">SHOULD</span> be <code>https</code>. The parameter is <span class="bcp14">OPTIONAL</span>;
+it is omitted when not applicable.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-2"><code>tee.refresh-uri</code> is deliberately not the CoRIM payload's
+<code>/ dependent-rims / 2</code> (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 4.1.3): <code>dependent-rims</code>
+names other CoRIMs a Verifier is expected to fetch and process during
+appraisal, whereas <code>tee.refresh-uri</code> imposes no appraisal-time fetch
+obligation -- it is an out-of-band hint for obtaining a later POE.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="corim-level-fields">
+<section id="section-3.4">
+        <h3 id="name-corim-level-fields">
+<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-corim-level-fields" class="section-name selfRef">CoRIM-level fields</a>
+        </h3>
+<div id="corim-id">
+<section id="section-3.4.1">
+          <h4 id="name-identifier">
+<a href="#section-3.4.1" class="section-number selfRef">3.4.1. </a><a href="#name-identifier" class="section-name selfRef">Identifier</a>
+          </h4>
+<p id="section-3.4.1-1">The CoRIM <code>id</code> field (key 0, <code>corim-id-type-choice</code>) is per-instance:
+each (PIID, owner) change and each validity-window refresh produces a
+distinct CoRIM, hence a distinct <code>id</code>. Issuers <span class="bcp14">SHOULD</span> encode <code>id</code> as
+a UUIDv8 (<code>uuid-type</code>, untagged 16-byte <code>bstr</code>) derived as a
+left-truncated SHA-384 over the CDE-encoded (<span>[<a href="#RFC8949" class="cite xref">RFC8949</a>]</span>, Section
+4.2) <code>tagged-unsigned-corim-map</code> payload with the <code>/ id / 0</code> entry
+omitted; the leftmost 16 bytes become the UUID, with version/variant
+bits set per <span>[<a href="#RFC9562" class="cite xref">RFC9562</a>]</span>, Section 4. Other schemes (random UUIDv4/v7,
+or a <code>tstr</code> issuer-internal naming convention) <span class="bcp14">MAY</span> be used provided
+the per-issuer-namespace uniqueness requirement of <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section
+4.1.1, holds. Verifiers <span class="bcp14">MUST</span> treat <code>id</code> as informational and <span class="bcp14">MUST NOT</span>
+re-derive it.<a href="#section-3.4.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.4.1-2">The CoMID <code>tag-id</code> (<a href="#tag-identity" class="auto internal xref">Section 4.1</a>) uses the same mechanism over a
+narrower input (the CoMID's <code>/ triples / 4</code> only): <code>tag-id</code> is a
+subject identifier and remains stable across re-issuance of the same
+logical binding, whereas <code>id</code> perturbs on every byte that differs.
+Generators that use both derivations <span class="bcp14">MUST</span> compute <code>tag-id</code> first,
+embed the CoMID, then compute <code>id</code>.<a href="#section-3.4.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="tags-cardinality">
+<section id="section-3.4.2">
+          <h4 id="name-tags-cardinality">
+<a href="#section-3.4.2" class="section-number selfRef">3.4.2. </a><a href="#name-tags-cardinality" class="section-name selfRef">Tags cardinality</a>
+          </h4>
+<p id="section-3.4.2-1">The CoRIM <code>tags</code> field (key 1) <span class="bcp14">MUST</span> contain exactly one entry under
+this profile. That entry <span class="bcp14">MUST</span> be a Platform Ownership CoMID
+(<code>#6.506(bstr .cbor concise-mid-tag-map)</code>) carrying the
+<code>tee.platform-instance-id</code> extension key (<code>-101</code>, see
+<a href="#conditions" class="auto internal xref">Section 4.3</a>). The base CoRIM schema permits one or more entries
+(<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 4.1.2); this profile tightens that to exactly
+one. Verifiers <span class="bcp14">MUST</span> reject CoRIMs whose <code>tags</code> array is empty,
+contains more than one entry, or contains an entry that is not a POE
+CoMID. Issuers needing batch issuance <span class="bcp14">MUST</span> emit one CoRIM per
+platform.<a href="#section-3.4.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="profile-id">
+<section id="section-3.4.3">
+          <h4 id="name-profile">
+<a href="#section-3.4.3" class="section-number selfRef">3.4.3. </a><a href="#name-profile" class="section-name selfRef">Profile</a>
+          </h4>
+<p id="section-3.4.3-1">The CoRIM <code>profile</code> field (key 3, <code>profile-type-choice</code>) <span class="bcp14">MUST</span> be
+present and <span class="bcp14">MUST</span> be the literal <span>[<a href="#RFC4151" class="cite xref">RFC4151</a>]</span>-style tag URI:<a href="#section-3.4.3-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.4.3-2">
+<pre>
+tag:intel.com,2026:tee.poe#1.0
+</pre><a href="#section-3.4.3-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3.4.3-3">carried as an untagged <code>tstr</code> (the <code>uri</code> alternative of
+<code>profile-type-choice</code>). The fragment carries a <code>#&lt;major&gt;.&lt;minor&gt;</code>
+version axis. A breaking change to this profile <span class="bcp14">MUST</span> bump <code>&lt;major&gt;</code>;
+a purely additive change that an unaware Verifier can safely ignore
+<span class="bcp14">MAY</span> bump <code>&lt;minor&gt;</code>. Per <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 4.1.4, any change other
+than such a <code>&lt;minor&gt;</code> bump constitutes a new profile and <span class="bcp14">MUST</span> be
+assigned a new identifier.<a href="#section-3.4.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.4.3-4">Verifiers <span class="bcp14">MUST</span> reject the CoRIM if <code>profile</code> is absent, is not the
+literal byte-equal string above on the <code>&lt;major&gt;</code> axis (current
+<code>&lt;major&gt;</code> is <code>1</code>), or is encoded as any other type (e.g. an <code>https:</code>
+URI, or an OID via <code>tagged-oid-type</code>). On a recognised <code>&lt;major&gt;</code>
+with any <code>&lt;minor&gt;</code> -- including one higher than the Verifier's
+built-in maximum -- the Verifier <span class="bcp14">MUST</span> accept the CoRIM and ignore
+any top-level CoRIM keys it does not recognise, subject to the
+"<span class="bcp14">MUST NOT</span> be present" restrictions in this profile.<a href="#section-3.4.3-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="rim-validity">
+<section id="section-3.4.4">
+          <h4 id="name-validity">
+<a href="#section-3.4.4" class="section-number selfRef">3.4.4. </a><a href="#name-validity" class="section-name selfRef">Validity</a>
+          </h4>
+<p id="section-3.4.4-1">The CoRIM <code>rim-validity</code> field (key 4, <code>validity-map</code>) is <span class="bcp14">REQUIRED</span>
+under this profile, with both <code>not-before</code> (key 0) and <code>not-after</code>
+(key 1) populated as <code>#6.1</code> epoch-based numeric date-time values
+(<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 7.3; <span>[<a href="#RFC8949" class="cite xref">RFC8949</a>]</span>, Section 3.4.2). A bounded validity window
+provides the only standing time-based ceiling on a stale endorsement
+in the absence of an in-band revocation channel; see
+<a href="#security-considerations" class="auto internal xref">Section 7</a>.<a href="#section-3.4.4-1" class="pilcrow">¶</a></p>
+<p id="section-3.4.4-2">This profile sets no normative upper bound on <code>not-after - not-before</code>.
+Issuers <span class="bcp14">SHOULD</span> keep windows short to bound staleness, and are recommended
+to bind refresh to an existing platform lifecycle event -- for
+example, alongside Intel TCB Recovery events, so the POE and the PCK
+certificate (<span>[<a href="#SGX-PCK" class="cite xref">SGX-PCK</a>]</span>) stay in lock-step. The Intel generator's
+default lifetime is <code>P5Y</code>; issuers with a scheduled re-issuance
+pipeline <span class="bcp14">SHOULD</span> override it to match their cadence.<a href="#section-3.4.4-2" class="pilcrow">¶</a></p>
+<p id="section-3.4.4-3"><code>rim-validity</code> is the semantic lifetime of the (PIID, owner) binding
+and is independent of the COSE signing-chain validity. An issuer <span class="bcp14">MAY</span>
+assert a multi-year <code>rim-validity</code> signed by a shorter-lived chain,
+expecting to refresh the unprotected <code>x5chain</code> (re-certify the same
+signing key) without re-signing the endorsement. The Verifier <span class="bcp14">MUST</span>
+intersect <code>rim-validity</code> with the <code>max(cert.notBefore)</code>..<code>min(cert.notAfter)</code>
+window across the <code>x5chain</code> and <span class="bcp14">MUST</span> reject the CoRIM if the
+intersection is empty or if the caller-supplied verification
+timestamp falls outside it.<a href="#section-3.4.4-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="poe-comid-encoding">
+<section id="section-4">
+      <h2 id="name-poe-comid-encoding">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-poe-comid-encoding" class="section-name selfRef">POE CoMID Encoding</a>
+      </h2>
+<div id="tag-identity">
+<section id="section-4.1">
+        <h3 id="name-tag-identity">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-tag-identity" class="section-name selfRef">Tag Identity</a>
+        </h3>
+<p id="section-4.1-1">The CoMID <code>tag-identity</code> (key 1) carries exactly one populated field
+under this profile:<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.1-2.1">
+            <p id="section-4.1-2.1.1"><code>tag-id</code> (key 0): identifies the (platform, owner) binding. Issuers
+<span class="bcp14">SHOULD</span> encode <code>tag-id</code> by the same UUIDv8 / left-truncated SHA-384 /
+CDE mechanism as <code>corim-id</code> (<a href="#corim-id" class="auto internal xref">Section 3.4.1</a>), computed over this
+CoMID's <code>/ triples / 4</code> map. The derivation is deterministic for a
+given <code>triples</code> content, so a validity-window refresh (since
+<code>rim-validity</code> lives at the CoRIM level) yields the same <code>tag-id</code>,
+whereas a change to the bound PIID or owner name yields a new tag.
+Other schemes (random UUIDv4/v7, or a <code>tstr</code> issuer-internal naming
+convention) <span class="bcp14">MAY</span> be used provided uniqueness per <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section
+5.1.1, holds. Verifiers <span class="bcp14">MUST</span> treat <code>tag-id</code> as informational and
+<span class="bcp14">MUST NOT</span> validate the derivation.<a href="#section-4.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.1-3">The <code>tag-version</code> field (key 1) <span class="bcp14">MUST NOT</span> be present. The meaningful
+re-issuance axis is already captured by the <code>tag-id</code> derivation: a
+change in PIID or owner name yields a new <code>tag-id</code>. A per-instance
+revision counter adds no appraisal value and would require Issuers
+to track per-<code>(PIID, owner)</code> monotonic state. Verifiers <span class="bcp14">MUST</span> ignore
+<code>tag-version</code> if present.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="single-record">
+<section id="section-4.2">
+        <h3 id="name-single-record-cardinality">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-single-record-cardinality" class="section-name selfRef">Single-record cardinality</a>
+        </h3>
+<p id="section-4.2-1">The CoRIM/CoMID base schema (<span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 5.1.4) allows
+one-or-more <code>conditional-endorsement-triple-record</code> entries in
+<code>/ conditional-endorsement-triples / 10</code>. This profile tightens that
+to <strong>exactly one</strong> record per CoMID. Each binding then has its own
+<code>tag-id</code>, validity window, and revocation lifecycle. Multiple
+bindings -- different platforms, different owners, or alternative
+conditions on the same platform -- <span class="bcp14">MUST</span> be carried as separate
+CoRIMs (this profile pins <code>/ tags / 1</code> to exactly one CoMID; see
+<a href="#tags-cardinality" class="auto internal xref">Section 3.4.2</a>).<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2-2">Generators <span class="bcp14">MUST</span> emit exactly one record per CoMID; Verifiers <span class="bcp14">MUST</span>
+reject a CoMID carrying zero or more-than-one record under this
+profile.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conditions">
+<section id="section-4.3">
+        <h3 id="name-conditions-clause">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-conditions-clause" class="section-name selfRef">Conditions clause</a>
+        </h3>
+<p id="section-4.3-1">The condition is a <code>stateful-environment-record</code> whose
+<code>environment-map</code> identifies the PIID-bearing environment in Evidence
+and whose <code>measurement-values-map</code> carries the PIID value to match.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<span id="name-poe-conditions-clause"></span><figure id="figure-2">
+          <div class="lang-cbor-diag sourcecode" id="section-4.3-2.1">
+<pre>
+/ stateful-environment-record / [
+  / environment-map / {
+    / class / 0 : {
+      / class-id / 0 : 111(h'6086480186F84D010D020601')
+                                      ; 2.16.840.1.113741.1.13.2.6.1
+                                      ; Intel PIID environment OID
+    }
+  },
+  / claims-list / [
+    / measurement-map / {
+      / mkey / 0 : "tee.poe.platform-binding",
+      / mval / 1 : {
+        / tee.platform-instance-id /
+        -101 : h'...'                 ; PIID, 16 B or 32 B
+      }
+    }
+  ]
+]
+</pre>
+</div>
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<a href="#name-poe-conditions-clause" class="selfRef">POE conditions clause</a>
+          </figcaption></figure>
+<p id="section-4.3-3"><code>environment.class.class-id</code> (key 0) <span class="bcp14">MUST</span> be the OID identifying the
+Intel PIID environment, <code>2.16.840.1.113741.1.13.2.6.1</code>, encoded as
+<code>tagged-oid-type</code> (CBOR tag 111). This OID matches the corresponding
+PIID environment tag in the Intel SGX platform certificate <span>[<a href="#SGX-PCK" class="cite xref">SGX-PCK</a>]</span>
+and is the binding point between the certificate-side and CoMID-side
+representations of the same identifier.<a href="#section-4.3-3" class="pilcrow">¶</a></p>
+<p id="section-4.3-4"><code>environment.class.vendor</code> (key 1) <span class="bcp14">MUST NOT</span> be present. The
+<code>class-id</code> OID is identity-bearing on its own; <code>vendor = "Intel"</code>
+would be a redundant constant.<a href="#section-4.3-4" class="pilcrow">¶</a></p>
+<p id="section-4.3-5"><code>environment.class.model</code> (key 2) <span class="bcp14">MUST NOT</span> be present. The <code>class-id</code>
+OID uniquely identifies the PIID-bearing environment for this
+profile, and the platform model is determined by the PIID itself --
+a per-instance property rather than a class attribute.<a href="#section-4.3-5" class="pilcrow">¶</a></p>
+<p id="section-4.3-6"><code>measurement-map.authorized-by</code> <span class="bcp14">MUST NOT</span> be present. Issuer
+authorisation is conveyed by the COSE <code>x5chain</code> trust chain, not by a
+per-measurement key. A Verifier <span class="bcp14">MUST</span> reject a CoRIM in which
+<code>authorized-by</code> is present.<a href="#section-4.3-6" class="pilcrow">¶</a></p>
+<p id="section-4.3-7"><code>measurement-map.mkey</code> (key 0) is <span class="bcp14">RECOMMENDED</span>. When present, it
+<span class="bcp14">SHOULD</span> be the <code>tstr</code> value <code>"tee.poe.platform-binding"</code> -- a
+diagnostic aid that keeps CBOR-diagnostic dumps self-describing.
+Appraisal <span class="bcp14">MUST NOT</span> depend on <code>mkey</code>; Verifiers <span class="bcp14">MUST</span> accept the field
+absent, present with this value, or present with any other <code>tstr</code>,
+and <span class="bcp14">MUST</span> treat the bound PIID as the matching key.<a href="#section-4.3-7" class="pilcrow">¶</a></p>
+<p id="section-4.3-8">The PIID itself is carried in <code>measurement-values-map</code> under the
+profile-private extension key <code>-101</code> (registered name
+<code>tee.platform-instance-id</code>). The value is a CBOR byte
+string of length 16 or 32.
+Generators <span class="bcp14">MUST</span> preserve the caller-supplied length verbatim.
+Verifiers <span class="bcp14">MUST</span> compare the Evidence PIID against the bound value
+verbatim over the full length; a length mismatch is a non-match.
+Lengths other than 16 or 32 <span class="bcp14">MUST</span> be rejected.<a href="#section-4.3-8" class="pilcrow">¶</a></p>
+<p id="section-4.3-9">Per <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 5.2.1, negative integer keys under
+<code>measurement-values-map</code> are profile-private; this profile's
+allocations are listed in <a href="#ext-claims" class="auto internal xref">Section 4.5</a>.<a href="#section-4.3-9" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="endorsements">
+<section id="section-4.4">
+        <h3 id="name-endorsements-clause">
+<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-endorsements-clause" class="section-name selfRef">Endorsements clause</a>
+        </h3>
+<p id="section-4.4-1">The endorsement is an <code>endorsed-triple-record</code> whose
+<code>measurement-values-map</code> carries the Owner identity claim.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<span id="name-poe-endorsements-clause"></span><figure id="figure-3">
+          <div class="lang-cbor-diag sourcecode" id="section-4.4-2.1">
+<pre>
+/ endorsed-triple-record / [
+  / environment-map / {
+    / class / 0 : {
+      / class-id / 0 : 111(h'6086480186F84D010D020C01')
+                                     ; 2.16.840.1.113741.1.13.2.12.1
+                                     ; Intel Owner-Endorsement OID
+    }
+  },
+  / measurements / [
+    / measurement-map / {
+      / mkey / 0 : "tee.poe.ownership-claims",
+      / mval / 1 : {
+        / tee.owner-name / -401 : "csp.example"
+      }
+    }
+  ]
+]
+</pre>
+</div>
+<figcaption><a href="#figure-3" class="selfRef">Figure 3</a>:
+<a href="#name-poe-endorsements-clause" class="selfRef">POE endorsements clause</a>
+          </figcaption></figure>
+<p id="section-4.4-3"><code>environment.class.class-id</code> (key 0) <span class="bcp14">MUST</span> be the OID
+<code>2.16.840.1.113741.1.13.2.12.1</code> -- the Intel Owner-Endorsement
+environment class (version 1) -- encoded as <code>tagged-oid-type</code>
+(CBOR tag 111). This OID is a sibling of the PIID environment OID
+on the conditions side (<code>2.16.840.1.113741.1.13.2.6.1</code>).<a href="#section-4.4-3" class="pilcrow">¶</a></p>
+<p id="section-4.4-4"><code>measurement-map.authorized-by</code> <span class="bcp14">MUST NOT</span> be present, for the same
+reason as in <a href="#conditions" class="auto internal xref">Section 4.3</a>; a Verifier <span class="bcp14">MUST</span> likewise reject a CoRIM in
+which it is present.<a href="#section-4.4-4" class="pilcrow">¶</a></p>
+<p id="section-4.4-5"><code>measurement-map.mkey</code> (key 0) is <span class="bcp14">RECOMMENDED</span>. When present, it
+<span class="bcp14">SHOULD</span> be the <code>tstr</code> value <code>"tee.poe.ownership-claims"</code>. As on the
+conditions side, <code>mkey</code> is a diagnostic aid only; appraisal <span class="bcp14">MUST NOT</span>
+depend on it.<a href="#section-4.4-5" class="pilcrow">¶</a></p>
+<p id="section-4.4-6"><code>measurement-values-map</code> <span class="bcp14">MUST</span> carry exactly one entry: the Owner
+name under the profile-private extension key <code>-401</code> (registered name
+<code>tee.owner-name</code>). The value is a UTF-8 text string of length 1 to 1024
+bytes.<a href="#section-4.4-6" class="pilcrow">¶</a></p>
+<p id="section-4.4-7">The value <span class="bcp14">SHOULD</span> be a DNS name controlled by the Owner organisation
+(e.g., <code>csp.example</code>, <code>aws.amazon.com</code>, <code>azure.microsoft.com</code>). DNS
+names are globally unique and human-readable, which makes them the
+preferred form. Other globally-unique forms -- a URI, an LEI, a
+DUNS number, or a fully-qualified X.500 Distinguished Name -- <span class="bcp14">MAY</span>
+be used where a DNS name is not available; locally-scoped or
+free-form strings <span class="bcp14">SHOULD NOT</span> be used.<a href="#section-4.4-7" class="pilcrow">¶</a></p>
+<p id="section-4.4-8">The Verifier <span class="bcp14">MUST</span> surface the decoded <code>tee.owner-name</code> to the caller
+verbatim and <span class="bcp14">SHOULD</span> additionally surface the Issuer identity (COSE
+<code>x5chain</code> leaf Subject and the <code>CWT-Claims</code> <code>iss</code> claim) so
+callers can detect Issuer-vs-Owner mismatches. The appraisal
+outcome <span class="bcp14">MUST NOT</span> depend on the value of <code>tee.owner-name</code>; interpretation
+is a policy-layer concern.<a href="#section-4.4-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="ext-claims">
+<section id="section-4.5">
+        <h3 id="name-extension-claims">
+<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-extension-claims" class="section-name selfRef">Extension claims</a>
+        </h3>
+<p id="section-4.5-1">This profile allocates the following profile-private extension keys
+under <code>$$measurement-values-map-extension</code>:<a href="#section-4.5-1" class="pilcrow">¶</a></p>
+<span id="name-poe-measurement-values-map-"></span><table class="center" id="table-1">
+          <caption>
+<a href="#table-1" class="selfRef">Table 1</a>:
+<a href="#name-poe-measurement-values-map-" class="selfRef">POE measurement-values-map extension keys</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Key</th>
+              <th class="text-left" rowspan="1" colspan="1">Name</th>
+              <th class="text-left" rowspan="1" colspan="1">Type</th>
+              <th class="text-left" rowspan="1" colspan="1">Used in</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">-101</td>
+              <td class="text-left" rowspan="1" colspan="1">tee.platform-instance-id</td>
+              <td class="text-left" rowspan="1" colspan="1">bstr (size 16 or 32)</td>
+              <td class="text-left" rowspan="1" colspan="1">conditions clause</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">-401</td>
+              <td class="text-left" rowspan="1" colspan="1">tee.owner-name</td>
+              <td class="text-left" rowspan="1" colspan="1">tstr (size 1..1024)</td>
+              <td class="text-left" rowspan="1" colspan="1">endorsements clause</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-4.5-3">Key <code>-101</code> corresponds to the <code>tee.platform-instance-id</code>
+          <code>measurement-values-map</code> extension defined by the Intel Profile for
+Remote Attestation (<span>[<a href="#INTEL-PROFILE" class="cite xref">INTEL-PROFILE</a>]</span>, Section 8.3.6); it is shared
+with the wider Intel <code>tee.*</code> namespace and is not exclusive to this
+profile. Key <code>-401</code> is allocated here.<a href="#section-4.5-3" class="pilcrow">¶</a></p>
+<p id="section-4.5-4">Unlike the Intel Profile (<span>[<a href="#INTEL-PROFILE" class="cite xref">INTEL-PROFILE</a>]</span>), which plugs each key
+into the open <code>$$measurement-values-map-extension</code> socket, this
+profile pins closed <code>measurement-values-map</code>s (<a href="#cddl" class="auto internal xref">Appendix A</a>) so that
+exactly one entry is permitted on each of the conditions and
+endorsements sides.<a href="#section-4.5-4" class="pilcrow">¶</a></p>
+<p id="section-4.5-5">Per <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 5.2.1, negative integer keys are reserved for
+per-profile private use and require no IANA action. Keys allocated
+here <span class="bcp14">MUST NOT</span> be used by generators or interpreted by Verifiers in
+the absence of the POE profile identifier in the enclosing CoRIM
+<code>/ profile / 3</code> field.<a href="#section-4.5-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="complete-example">
+<section id="section-5">
+      <h2 id="name-complete-example">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-complete-example" class="section-name selfRef">Complete Example</a>
+      </h2>
+<p id="section-5-1">A complete CBOR-diagnostic example of a POE CoRIM is shown in
+<a href="#fig-example" class="auto internal xref">Figure 4</a>. Values shown as <code>h'...'</code> are abbreviated for
+readability.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<span id="name-complete-poe-corim-example-"></span><div id="fig-example">
+<figure id="figure-4">
+        <div class="breakable lang-cbor-diag sourcecode" id="section-5-2.1">
+<pre>
+18([                                  ; COSE_Sign1
+  &lt;&lt; {                                ; protected header
+    / alg / 1          : -35,         ; ES384
+    / content-type / 3 : "application/rim+cbor",
+    / kid / 4          : h'...',      ; SHA-384 COSE Key Thumbprint
+    / CWT-Claims / 15  : {
+      / iss / 1 : "csp.example"
+    },
+    / tee.refresh-uri /
+      "tee.refresh-uri" :
+      32("https://poe.example.com/corims/{PIID}.cbor")
+  } &gt;&gt;,
+  {                                   ; unprotected header
+    / x5chain / 33 : [ h'...', h'...' ]
+  },
+  &lt;&lt; 501( {                           ; payload: tagged corim-map
+    / id           / 0 : h'...',      ; 16-byte UUIDv8 (untagged)
+    / tags         / 1 : [
+      506( &lt;&lt;                         ; concise-mid-tag
+        {
+          / tag-identity / 1 : {
+            / tag-id / 0 : h'...'     ; 16-byte UUIDv8 (untagged)
+          },
+          / triples / 4 : {
+            / conditional-endorsement-triples / 10 : [
+              [
+                / conditions / [
+                  [
+                    / environment-map / {
+                      / class / 0 : {
+                        / class-id / 0 :
+                          111(h'6086480186F84D010D020601')
+                          ; 2.16.840.1.113741.1.13.2.6.1 (PIID env)
+                      }
+                    },
+                    / claims-list / [
+                      / measurement-map / {
+                        / mkey / 0 : "tee.poe.platform-binding",
+                        / mval / 1 : {
+                          / -101 / : h'...' ; PIID, 16 or 32 bytes
+                        }
+                      }
+                    ]
+                  ]
+                ],
+                / endorsements - additions / [
+                  [
+                    / environment-map / {
+                      / class / 0 : {
+                        / class-id / 0 :
+                          111(h'6086480186F84D010D020C01')
+                          ; 2.16.840.1.113741.1.13.2.12.1
+                          ; (Owner-Endorsement env)
+                      }
+                    },
+                    / measurements / [
+                      / measurement-map / {
+                        / mkey / 0 : "tee.poe.ownership-claims",
+                        / mval / 1 : {
+                          / -401 / : "csp.example"
+                        }
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      &gt;&gt; )
+    ],
+    / profile      / 3 : "tag:intel.com,2026:tee.poe#1.0",
+    / rim-validity / 4 : {
+      / not-before / 0 : 1(1780358400),  ; 2026-06-02T00:00:00Z
+      / not-after  / 1 : 1(1938124800)   ; 2031-06-02T00:00:00Z
+    }
+  } ) &gt;&gt;,
+  h'...'                              ; signature
+])
+</pre>
+</div>
+<figcaption><a href="#figure-4" class="selfRef">Figure 4</a>:
+<a href="#name-complete-poe-corim-example-" class="selfRef">Complete POE CoRIM example (CBOR diagnostic)</a>
+        </figcaption></figure>
+</div>
+</section>
+</div>
+<div id="implementation-status">
+<section id="section-6">
+      <h2 id="name-implementation-status">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-implementation-status" class="section-name selfRef">Implementation Status</a>
+      </h2>
+<p id="section-6-1">This section records implementations of the profile defined by this
+specification, in the spirit of <span>[<a href="#RFC7942" class="cite xref">RFC7942</a>]</span>.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6-2.1">
+          <p id="section-6-2.1.1">Intel provides open-source tooling for the POE flow at
+<a href="https://github.com/intel/confidential-computing.tee.dcap.poe">https://github.com/intel/confidential-computing.tee.dcap.poe</a>,
+distributed under the BSD-3-Clause license:<a href="#section-6-2.1.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6-2.1.2.1">
+              <p id="section-6-2.1.2.1.1">The Intel(R) POE Generator (<code>poe-gen-tool</code>) extracts the Platform
+Instance Identity (PIID) from a Platform Manifest, PCK certificate,
+or SGX/TDX Quote, and builds and signs a POE CoRIM as specified in
+this document.<a href="#section-6-2.1.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6-2.1.2.2">
+              <p id="section-6-2.1.2.2.1">The Intel(R) POE Evaluator (<code>poe-eval-tool</code>) parses a POE CoRIM,
+matches its bound PIID against attestation Evidence, and surfaces the
+endorsed owner identity to the caller.<a href="#section-6-2.1.2.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6-2.1.3">
+Both tools track the <code>tag:intel.com,2026:tee.poe#1.0</code> profile
+defined here.<a href="#section-6-2.1.3" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-7">
+      <h2 id="name-security-considerations">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<div id="issuer-trust">
+<section id="section-7.1">
+        <h3 id="name-issuer-trust">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-issuer-trust" class="section-name selfRef">Issuer trust</a>
+        </h3>
+<p id="section-7.1-1">A POE is only as trustworthy as the COSE_Sign1 signer. Relying
+Parties <span class="bcp14">MUST</span> establish a trust anchor for the Issuer's signing
+certificate chain out of band; this profile does not define an Issuer
+trust hierarchy. Operational mechanisms for distributing Issuer
+trust anchors are deployment-specific.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="issuer-is-not-necessarily-owner">
+<section id="section-7.2">
+        <h3 id="name-issuer-is-not-necessarily-o">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-issuer-is-not-necessarily-o" class="section-name selfRef">Issuer is not necessarily Owner</a>
+        </h3>
+<p id="section-7.2-1">This profile decouples the Issuer (who signs the CoRIM) from the
+Owner (whose identity is endorsed), so that a Cloud Service Provider
+or a delegated provisioning service can act as Issuer on the Owner's
+behalf. Relying Parties whose policy requires the Issuer and Owner
+to match (or to satisfy any other relationship) <span class="bcp14">MUST</span> enforce that
+relationship at the policy layer using the Issuer identity surfaced
+by the Verifier (see <a href="#conditions" class="auto internal xref">Section 4.3</a>) and the <code>tee.owner-name</code> claim.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="revocation">
+<section id="section-7.3">
+        <h3 id="name-revocation">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-revocation" class="section-name selfRef">Revocation</a>
+        </h3>
+<p id="section-7.3-1">This profile defines no in-band revocation mechanism for individual
+POEs. Issuers <span class="bcp14">MUST</span> bound POE validity windows for their deployment
+(see <a href="#rim-validity" class="auto internal xref">Section 3.4.4</a>), and <span class="bcp14">SHOULD</span> refresh a POE before its window
+elapses; Intel TCB Recovery is a natural refresh trigger on Intel
+platforms, keeping the POE and PCK certificate in lock-step (<span>[<a href="#SGX-PCK" class="cite xref">SGX-PCK</a>]</span>).<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-2">A change to the (PIID, Owner) binding requires a new POE,
+yielding a new <code>tag-id</code> (see <a href="#tag-identity" class="auto internal xref">Section 4.1</a>); on an ownership change
+an SGX Factory Reset by the platform operator is also recommended, as the
+resulting new PIID naturally orphans every POE bound to the prior one
+(<span>[<a href="#POE-WHITEPAPER" class="cite xref">POE-WHITEPAPER</a>]</span>).<a href="#section-7.3-2" class="pilcrow">¶</a></p>
+<p id="section-7.3-3">Standard COSE signing-chain revocation (CRL, OCSP) applies to the
+Issuer certificate chain. Issuers can also use their CA layout to scope
+revocation -- e.g. dedicating an intermediate CA to a fleet, tenant,
+or issuance batch so one revocation invalidates every POE issued
+under it.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="piid-confidentiality">
+<section id="section-7.4">
+        <h3 id="name-piid-confidentiality">
+<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-piid-confidentiality" class="section-name selfRef">PIID confidentiality</a>
+        </h3>
+<p id="section-7.4-1">The PIID is a per-instance identifier that can be used to track a
+platform across attestation flows. A POE makes the
+PIID-Owner binding publicly visible to any party that receives the
+CoRIM. Issuers that distribute POEs to untrusted parties <span class="bcp14">SHOULD</span>
+consider whether this disclosure is acceptable in their threat model.<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+<p id="section-7.4-2">Note that an SGX Factory Reset establishes a new PIID
+(<span>[<a href="#POE-WHITEPAPER" class="cite xref">POE-WHITEPAPER</a>]</span>), bounding that correlation.<a href="#section-7.4-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana">
+<section id="section-8">
+      <h2 id="name-iana-considerations">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-8-1">This document requests no IANA action.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">The profile identifier (<a href="#profile-id" class="auto internal xref">Section 3.4.3</a>) is an <span>[<a href="#RFC4151" class="cite xref">RFC4151</a>]</span> tag URI
+(<code>tag:intel.com,2026:tee.poe#1.0</code>); per RFC 4151, no registration is
+required. The DNS authority <code>intel.com</code> is under the control of Intel
+Corporation, and the year <code>2026</code> pins the allocation per RFC 4151,
+Section 2.4.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-8-3">The OIDs used in this profile are under Intel's private enterprise arc
+(<code>2.16.840.1.113741</code>); their allocation is administered by Intel and
+requires no IANA action:<a href="#section-8-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8-4.1">
+          <p id="section-8-4.1.1"><code>2.16.840.1.113741.1.13.2.6.1</code> -- Intel PIID environment class,
+reused from <span>[<a href="#SGX-PCK" class="cite xref">SGX-PCK</a>]</span>, used as <code>environment.class.class-id</code> in
+the conditions clause (<a href="#conditions" class="auto internal xref">Section 4.3</a>).<a href="#section-8-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-8-4.2">
+          <p id="section-8-4.2.1"><code>2.16.840.1.113741.1.13.2.12.1</code> -- Intel Owner-Endorsement
+environment class, version 1, used as <code>environment.class.class-id</code>
+in the endorsements clause (<a href="#endorsements" class="auto internal xref">Section 4.4</a>).<a href="#section-8-4.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-8-5">The negative integer keys allocated in <a href="#ext-claims" class="auto internal xref">Section 4.5</a>
+(<code>-101 tee.platform-instance-id</code> and <code>-401 tee.owner-name</code>)
+are profile-private per <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Section 5.2.1, and require no
+IANA action. Key <code>-101</code> is shared with the broader Intel <code>tee.*</code>
+namespace; the authoritative registry of record for cross-profile
+Intel allocations under that namespace is maintained outside this
+document, and a future revision may relocate the normative-of-record
+entry for <code>-101</code> accordingly without affecting IANA.<a href="#section-8-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-9">
+      <h2 id="name-references">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-9.1">
+        <h3 id="name-normative-references">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="CoRIM">[CoRIM]</dt>
+        <dd>
+<span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Fossati, T.</span>, <span class="refAuthor">Deshpande, Y.</span>, <span class="refAuthor">Smith, N.</span>, and <span class="refAuthor">W. Pan</span>, <span class="refTitle">"Concise Reference Integrity Manifest"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-corim-10</span>, <time datetime="2026-03" class="refDate">March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-corim-10">https://datatracker.ietf.org/doc/html/draft-ietf-rats-corim-10</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC3986">[RFC3986]</dt>
+        <dd>
+<span class="refAuthor">Berners-Lee, T.</span>, <span class="refAuthor">Fielding, R.</span>, and <span class="refAuthor">L. Masinter</span>, <span class="refTitle">"Uniform Resource Identifier (URI): Generic Syntax"</span>, <span class="seriesInfo">STD 66</span>, <span class="seriesInfo">RFC 3986</span>, <span class="seriesInfo">DOI 10.17487/RFC3986</span>, <time datetime="2005-01" class="refDate">January 2005</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc3986">https://www.rfc-editor.org/rfc/rfc3986</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC4151">[RFC4151]</dt>
+        <dd>
+<span class="refAuthor">Kindberg, T.</span> and <span class="refAuthor">S. Hawke</span>, <span class="refTitle">"The 'tag' URI Scheme"</span>, <span class="seriesInfo">RFC 4151</span>, <span class="seriesInfo">DOI 10.17487/RFC4151</span>, <time datetime="2005-10" class="refDate">October 2005</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc4151">https://www.rfc-editor.org/rfc/rfc4151</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC5280">[RFC5280]</dt>
+        <dd>
+<span class="refAuthor">Cooper, D.</span>, <span class="refAuthor">Santesson, S.</span>, <span class="refAuthor">Farrell, S.</span>, <span class="refAuthor">Boeyen, S.</span>, <span class="refAuthor">Housley, R.</span>, and <span class="refAuthor">W. Polk</span>, <span class="refTitle">"Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile"</span>, <span class="seriesInfo">RFC 5280</span>, <span class="seriesInfo">DOI 10.17487/RFC5280</span>, <time datetime="2008-05" class="refDate">May 2008</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5280">https://www.rfc-editor.org/rfc/rfc5280</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8392">[RFC8392]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Wahlstroem, E.</span>, <span class="refAuthor">Erdtman, S.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"CBOR Web Token (CWT)"</span>, <span class="seriesInfo">RFC 8392</span>, <span class="seriesInfo">DOI 10.17487/RFC8392</span>, <time datetime="2018-05" class="refDate">May 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8392">https://www.rfc-editor.org/rfc/rfc8392</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8949">[RFC8949]</dt>
+        <dd>
+<span class="refAuthor">Bormann, C.</span> and <span class="refAuthor">P. Hoffman</span>, <span class="refTitle">"Concise Binary Object Representation (CBOR)"</span>, <span class="seriesInfo">STD 94</span>, <span class="seriesInfo">RFC 8949</span>, <span class="seriesInfo">DOI 10.17487/RFC8949</span>, <time datetime="2020-12" class="refDate">December 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8949">https://www.rfc-editor.org/rfc/rfc8949</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9052">[RFC9052]</dt>
+        <dd>
+<span class="refAuthor">Schaad, J.</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE): Structures and Process"</span>, <span class="seriesInfo">STD 96</span>, <span class="seriesInfo">RFC 9052</span>, <span class="seriesInfo">DOI 10.17487/RFC9052</span>, <time datetime="2022-08" class="refDate">August 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9052">https://www.rfc-editor.org/rfc/rfc9052</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9053">[RFC9053]</dt>
+        <dd>
+<span class="refAuthor">Schaad, J.</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE): Initial Algorithms"</span>, <span class="seriesInfo">RFC 9053</span>, <span class="seriesInfo">DOI 10.17487/RFC9053</span>, <time datetime="2022-08" class="refDate">August 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9053">https://www.rfc-editor.org/rfc/rfc9053</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9360">[RFC9360]</dt>
+        <dd>
+<span class="refAuthor">Schaad, J.</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE): Header Parameters for Carrying and Referencing X.509 Certificates"</span>, <span class="seriesInfo">RFC 9360</span>, <span class="seriesInfo">DOI 10.17487/RFC9360</span>, <time datetime="2023-02" class="refDate">February 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9360">https://www.rfc-editor.org/rfc/rfc9360</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9562">[RFC9562]</dt>
+        <dd>
+<span class="refAuthor">Davis, K.</span>, <span class="refAuthor">Peabody, B.</span>, and <span class="refAuthor">P. Leach</span>, <span class="refTitle">"Universally Unique IDentifiers (UUIDs)"</span>, <span class="seriesInfo">RFC 9562</span>, <span class="seriesInfo">DOI 10.17487/RFC9562</span>, <time datetime="2024-05" class="refDate">May 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9562">https://www.rfc-editor.org/rfc/rfc9562</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9597">[RFC9597]</dt>
+        <dd>
+<span class="refAuthor">Looker, T.</span> and <span class="refAuthor">M.B. Jones</span>, <span class="refTitle">"CBOR Web Token (CWT) Claims in COSE Headers"</span>, <span class="seriesInfo">RFC 9597</span>, <span class="seriesInfo">DOI 10.17487/RFC9597</span>, <time datetime="2024-06" class="refDate">June 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9597">https://www.rfc-editor.org/rfc/rfc9597</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9679">[RFC9679]</dt>
+      <dd>
+<span class="refAuthor">Isobe, K.</span>, <span class="refAuthor">Tschofenig, H.</span>, and <span class="refAuthor">O. Steele</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE) Key Thumbprint"</span>, <span class="seriesInfo">RFC 9679</span>, <span class="seriesInfo">DOI 10.17487/RFC9679</span>, <time datetime="2024-12" class="refDate">December 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9679">https://www.rfc-editor.org/rfc/rfc9679</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-9.2">
+        <h3 id="name-informative-references">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="INTEL-PROFILE">[INTEL-PROFILE]</dt>
+        <dd>
+<span class="refAuthor">Beaney, J.</span>, <span class="refAuthor">Chinchilla, F.</span>, <span class="refAuthor">Deshpande, Y.</span>, <span class="refAuthor">Scarlata, V.</span>, and <span class="refAuthor">N. Smith</span>, <span class="refTitle">"Intel Profile for Remote Attestation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-cds-rats-intel-corim-profile-07</span>, <time datetime="2026-05" class="refDate">May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-cds-rats-intel-corim-profile-07">https://datatracker.ietf.org/doc/html/draft-cds-rats-intel-corim-profile-07</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="POE-WHITEPAPER">[POE-WHITEPAPER]</dt>
+        <dd>
+<span class="refTitle">"Platform Ownership Endorsements"</span>, <span>n.d.</span>, <span>&lt;<a href="https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/technical-documentation/platform-ownership-endorsements.html">https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/technical-documentation/platform-ownership-endorsements.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RATS-ARCH">[RATS-ARCH]</dt>
+        <dd>
+<span class="refTitle">"Remote ATtestation procedureS (RATS) Architecture"</span>, <span class="seriesInfo">RFC 9334</span>, <span>n.d.</span>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9334">https://www.rfc-editor.org/rfc/rfc9334</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7942">[RFC7942]</dt>
+        <dd>
+<span class="refAuthor">Sheffer, Y.</span> and <span class="refAuthor">A. Farrel</span>, <span class="refTitle">"Improving Awareness of Running Code: The Implementation Status Section"</span>, <span class="seriesInfo">BCP 205</span>, <span class="seriesInfo">RFC 7942</span>, <span class="seriesInfo">DOI 10.17487/RFC7942</span>, <time datetime="2016-07" class="refDate">July 2016</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7942">https://www.rfc-editor.org/rfc/rfc7942</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SGX-PCK">[SGX-PCK]</dt>
+      <dd>
+<span class="refTitle">"Intel SGX PCK Certificate and Certificate Revocation List Profile Specification"</span>, <span>n.d.</span>, <span>&lt;<a href="https://api.trustedservices.intel.com/documents/Intel_SGX_PCK_Certificate_CRL_Spec-1.5.pdf">https://api.trustedservices.intel.com/documents/Intel_SGX_PCK_Certificate_CRL_Spec-1.5.pdf</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="cddl">
+<section id="appendix-A">
+      <h2 id="name-cddl">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-cddl" class="section-name selfRef">CDDL</a>
+      </h2>
+<p id="appendix-A-1">This appendix gives a single self-contained CDDL fragment for the
+POE profile. It is a narrowing of base CoRIM <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>: every
+production defined here is a stricter form of the corresponding base
+production, expressing the constraints stated normatively in
+<a href="#single-record" class="auto internal xref">Section 4.2</a>, <a href="#tag-identity" class="auto internal xref">Section 4.1</a>, <a href="#conditions" class="auto internal xref">Section 4.3</a>,
+<a href="#endorsements" class="auto internal xref">Section 4.4</a>, and <a href="#ext-claims" class="auto internal xref">Section 4.5</a>.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-2">To validate a candidate POE CoRIM, concatenate the base CoRIM CDDL
+(<code>corim.cddl</code> from <span>[<a href="#CoRIM" class="cite xref">CoRIM</a>]</span>, Appendix A) with the fragment below
+and feed the combined grammar to a CDDL tool. The top-level rule is
+<code>poe-signed-corim</code>.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
+<p id="appendix-A-3">The following constraints cannot be expressed in CDDL and remain
+normative in prose:<a href="#appendix-A-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-A-4.1">
+          <p id="appendix-A-4.1.1">the literal OID byte strings pinned in <a href="#conditions" class="auto internal xref">Section 4.3</a> and
+<a href="#endorsements" class="auto internal xref">Section 4.4</a> (CDDL types over <code>bstr</code> cannot pin a specific
+byte sequence portably across tools);<a href="#appendix-A-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.2">
+          <p id="appendix-A-4.2.1">the UUIDv8/SHA-384/CDE derivation rule for <code>tag-id</code> (<a href="#tag-identity" class="auto internal xref">Section 4.1</a>)
+and <code>corim-id</code> (<a href="#corim-id" class="auto internal xref">Section 3.4.1</a>);<a href="#appendix-A-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.3">
+          <p id="appendix-A-4.3.1">the intersection of <code>rim-validity</code> with the COSE <code>x5chain</code>
+validity (<a href="#rim-validity" class="auto internal xref">Section 3.4.4</a>);<a href="#appendix-A-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.4">
+          <p id="appendix-A-4.4.1">the <code>mkey</code> string recommendations of <code>"tee.poe.platform-binding"</code>
+and <code>"tee.poe.ownership-claims"</code> (<a href="#conditions" class="auto internal xref">Section 4.3</a>, <a href="#endorsements" class="auto internal xref">Section 4.4</a>);<a href="#appendix-A-4.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.5">
+          <p id="appendix-A-4.5.1">the empty-<code>crit</code> requirement on the COSE protected header
+(<a href="#conformance" class="auto internal xref">Section 3.1</a>).<a href="#appendix-A-4.5.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<span id="name-poe-profile-cddl-self-conta"></span><figure id="figure-5">
+        <div class="breakable lang-cddl sourcecode" id="appendix-A-5.1">
+<pre>
+; ============================================================
+; POE CoRIM profile -- CDDL
+; Profile identifier: "tag:intel.com,2026:tee.poe#1.0"
+; Narrowing of draft-ietf-rats-corim-10.
+;
+; Dependencies: none at the CDDL level. This grammar is
+; self-contained -- it validates standalone against only the
+; RFC 8610 CDDL prelude (bstr, tstr, int, time, any) and has
+; no file/{::include} dependency on the base CoRIM grammar.
+; It does, however, *semantically* depend on:
+;   [CoRIM] draft-ietf-rats-corim-10 -- the CBOR tag numbers
+;           (#6.18, #6.32, #6.111, #6.501, #6.506), map-key
+;           code points, and the profile-narrowing mechanism.
+;   [COSE]  RFC 9052 -- the #6.18 COSE_Sign1 envelope and its
+;           protected/unprotected header label assignments.
+; The base grammar is not vendored here; scripts/validate-cddl.sh
+; fetches it ad-hoc at check time (optionally cached, git-ignored,
+; under cddl/imports/) purely as a cross-check aid. It is not
+; required to parse this file.
+;
+; Scope: PRODUCER (emission) grammar -- closed maps mean "a #1.0
+; producer emits exactly these keys", not "a verifier rejects
+; anything else". Verifier tolerance is normative in the draft's
+; Conformance section (a closed map cannot say "ignore unknowns
+; EXCEPT one key"). The lone forward-compat socket here is the
+; top-level `* (int / tstr) =&gt; any` on the unsigned CoRIM map.
+; ============================================================
+
+; --- Profile-private extension keys. Identifiers and the
+; --- $tee-platform-instance-id-type socket are reused verbatim
+; --- from the Intel Profile ([INTEL-PROFILE], Section 8.3.6);
+; --- tee.owner-name (-401) is allocated by this profile. Both
+; --- are negative-integer private code points per [CoRIM],
+; --- Section 5.2.1.
+; ---
+; --- The redeclaration below (see header) is value-identical to
+; --- the Intel Profile, so concatenating this profile with the
+; --- Intel Profile grammar is harmless -- CDDL tolerates an
+; --- identical rule redefinition (at most a benign warning) and
+; --- the $tee-*-type sockets merge additively. A *conflicting*
+; --- value would be a spec error: the desired fail-closed
+; --- behaviour.
+
+tee.platform-instance-id = -101
+tee.owner-name           = -401
+
+; POE narrows the Intel PIID value-type socket to two fixed
+; lengths and defines the owner-name socket locally.
+$tee-platform-instance-id-type /= bstr .size 16
+$tee-platform-instance-id-type /= bstr .size 32
+$tee-owner-name-type           /= tstr .size (1..1024)
+
+; --- Borrowed base aliases (definitions appear in [COSE] /
+; --- [CoRIM]; restated locally for self-containment). Both are
+; --- value-identical to base CoRIM (`cose-label` = int / tstr;
+; --- `uuid-type` = bytes .size 16), so each is a benign identical
+; --- redefinition when composed with base or the Intel grammar.
+
+cose-label = int / tstr
+uuid-type  = bytes .size 16   ; untagged UUID (any version)
+
+; --- Profile identifier (RFC 4151 tag URI).
+
+poe-profile-id = "tag:intel.com,2026:tee.poe#1.0"
+
+; --- OID byte strings (informational; literal pinning is
+; --- normative in prose, not in CDDL).
+
+poe-piid-env-oid        = bstr  ; 2.16.840.1.113741.1.13.2.6.1
+poe-owner-endorse-oid   = bstr  ; 2.16.840.1.113741.1.13.2.12.1
+
+; ------------------------------------------------------------
+; Top-level: signed POE CoRIM
+; ------------------------------------------------------------
+
+poe-signed-corim = #6.18([
+  bstr .cbor poe-protected-header-map,        ; protected
+  poe-unprotected-header-map,                 ; unprotected
+  bstr .cbor poe-tagged-unsigned-corim-map,   ; payload
+  bstr                                        ; signature
+])
+
+; --- Protected header
+
+poe-protected-header-map = {
+  1  =&gt; -35,                        ; alg = ES384
+  3  =&gt; "application/rim+cbor",     ; content-type
+  4  =&gt; bstr,                       ; kid (RFC 9679 thumbprint)
+  15 =&gt; poe-cwt-claims-map,         ; CWT-Claims (REQUIRED)
+  ? 8 =&gt; bstr .cbor poe-corim-meta-map,  ; corim-meta (legacy)
+  ? "tee.refresh-uri" =&gt; #6.32(tstr),    ; optional refresh URI
+  * cose-label =&gt; any               ; future profile-private only
+}
+
+poe-cwt-claims-map = {
+  1 =&gt; tstr,                        ; iss (signer identity)
+  ; closed map: no extension point; adding claims needs a
+  ; profile version bump. (no nbf/5, exp/4 -- see Signer metadata)
+}
+
+poe-corim-meta-map = {
+  0 =&gt; poe-signer-map,              ; signer (REQUIRED if present)
+  ; (no signature-validity/1 -- see Signer metadata)
+}
+
+poe-signer-map = {
+  0 =&gt; tstr,                        ; signer-name (== CWT iss)
+  ? 1 =&gt; any                        ; signer-uri (base CoRIM)
+}
+
+; --- Unprotected header
+
+poe-unprotected-header-map = {
+  33 =&gt; bstr / [ 2*bstr ],           ; x5chain (COSE_X509, [RFC9360]): leaf-first.
+                                    ; One cert =&gt; bare bstr; two-or-more =&gt; array.
+                                    ; Every intermediate CA MUST be present; only
+                                    ; the root MAY be omitted. Dropping the root
+                                    ; from a 2-cert chain leaves one cert, encoded
+                                    ; as the bare bstr -- not a 1-element array.
+  * cose-label =&gt; any
+}
+
+; ------------------------------------------------------------
+; Payload: tagged unsigned CoRIM map
+; ------------------------------------------------------------
+
+poe-tagged-unsigned-corim-map = #6.501(poe-unsigned-corim-map)
+
+poe-unsigned-corim-map = {
+  0 =&gt; uuid-type / tstr,             ; id (SHOULD UUIDv8; MAY tstr)
+  1 =&gt; [ poe-tagged-concise-mid-tag ],   ; tags: exactly one
+  3 =&gt; poe-profile-id,              ; profile (tstr; see Profile)
+  4 =&gt; poe-validity-map,            ; rim-validity (REQUIRED)
+  ? 2 =&gt; [ + any ],                 ; dependent-rims: optional,
+                                    ; informational, verifier-ignored
+  ? 5 =&gt; [ + any ],                 ; entities (CoRIM-level):
+                                    ; optional, verifier-ignored
+  ; Sole forward-compat socket in this producer grammar (see header
+  ; Scope note). Keys unknown in #1.0: verifiers MUST ignore;
+  ; producers conforming to #1.0 SHOULD NOT emit (see Conformance).
+  * (int / tstr) =&gt; any
+}
+
+poe-validity-map = {
+  0 =&gt; time,   ; not-before (#6.1 epoch-based; CoRIM Sec 7.3)
+  1 =&gt; time,   ; not-after  (#6.1 epoch-based; CoRIM Sec 7.3)
+}
+
+; ------------------------------------------------------------
+; POE CoMID
+; ------------------------------------------------------------
+
+poe-tagged-concise-mid-tag =
+  #6.506(bstr .cbor poe-concise-mid-tag-map)
+
+poe-concise-mid-tag-map = {
+  1 =&gt; poe-tag-identity-map,        ; tag-identity
+  4 =&gt; poe-triples-map,             ; triples
+  ; (no entities/5 -- see Conformance)
+}
+
+poe-tag-identity-map = {
+  0 =&gt; uuid-type / tstr,             ; tag-id (SHOULD UUIDv8; MAY tstr)
+  ; (no tag-version/1 -- see Conformance)
+}
+
+poe-triples-map = {
+  ; conditional-endorsement-triples: exactly one record; no
+  ; other triple kinds permitted.
+  10 =&gt; [ poe-cond-endorse-triple-record ],
+}
+
+; ------------------------------------------------------------
+; Conditional-endorsement triple record
+; ------------------------------------------------------------
+
+poe-cond-endorse-triple-record = [
+  conditions:            [ poe-condition-stateful-env ],
+  endorsement-additions: [ poe-endorsement-stateful-env ],
+]
+
+; --- Conditions side: PIID-bearing environment
+
+poe-condition-stateful-env = [
+  environment: poe-piid-environment-map,
+  claims-list: [ poe-piid-measurement-map ],  ; [+ measurement-map]
+]
+
+poe-piid-environment-map = {
+  0 =&gt; poe-piid-class-map,          ; class (REQUIRED)
+  ; (no instance/1, group/2 -- see Conformance)
+}
+
+poe-piid-class-map = {
+  0 =&gt; #6.111(poe-piid-env-oid),    ; class-id: tagged-oid-type
+  ; (no vendor/model/layer/index -- see Conformance)
+}
+
+poe-piid-measurement-map = {
+  ? 0 =&gt; tstr,                   ; mkey ("tee.poe.platform-binding")
+  1 =&gt; poe-piid-mval-map,           ; mval
+  ; (no authorized-by/2 -- see Conformance)
+}
+
+; Closed map: the Intel Profile plugs keys into the *open*
+; $$measurement-values-map-extension socket; this profile pins a
+; closed map instead, so exactly one key is permitted and any
+; other is rejected.
+poe-piid-mval-map = {
+  tee.platform-instance-id =&gt; $tee-platform-instance-id-type,
+}
+
+; --- Endorsements side: Owner identity
+
+poe-endorsement-stateful-env = [
+  environment:  poe-owner-environment-map,
+  measurements: [ poe-owner-measurement-map ],  ; [+ measurement-map]
+]
+
+poe-owner-environment-map = {
+  0 =&gt; poe-owner-class-map,         ; class (REQUIRED)
+  ; (no instance/1, group/2 -- see Conformance)
+}
+
+poe-owner-class-map = {
+  0 =&gt; #6.111(poe-owner-endorse-oid),  ; class-id: tagged-oid-type
+  ; (no vendor/model/layer/index -- see Conformance)
+}
+
+poe-owner-measurement-map = {
+  ? 0 =&gt; tstr,                   ; mkey ("tee.poe.ownership-claims")
+  1 =&gt; poe-owner-mval-map,          ; mval
+  ; (no authorized-by/2 -- see Conformance)
+}
+
+poe-owner-mval-map = {
+  tee.owner-name =&gt; $tee-owner-name-type,   ; closed map (see PIID)
+}
+</pre>
+</div>
+<figcaption><a href="#figure-5" class="selfRef">Figure 5</a>:
+<a href="#name-poe-profile-cddl-self-conta" class="selfRef">POE profile CDDL (self-contained)</a>
+        </figcaption></figure>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-B">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-B-1">The authors wish to thank Vincent R. Scarlata and Francisco J. Chinchilla for their valuable contributions.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-C">
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Mateusz Bronk</span></div>
+<div dir="auto" class="left"><span class="org">Intel Corporation</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:mateusz.bronk@intel.com" class="email">mateusz.bronk@intel.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Piotr Zmijewski</span></div>
+<div dir="auto" class="left"><span class="org">Intel Corporation</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:piotr.zmijewski@intel.com" class="email">piotr.zmijewski@intel.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">James D. Beaney</span></div>
+<div dir="auto" class="left"><span class="org">Intel Corporation</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:james.d.beaney@intel.com" class="email">james.d.beaney@intel.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
