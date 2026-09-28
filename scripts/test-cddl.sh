@@ -77,7 +77,7 @@ PROFILE_ID="${PROFILE_ID:-tag:intel.com,2026:tee.poe#1.0}"
 BASE_CDDL="${BASE_CDDL:-cddl/imports/corim-autogen.cddl}"
 
 # Positives MUST be accepted by base CoRIM and by this profile.
-POSITIVES="poe-golden poe-golden-tstr-id poe-golden-leaf-only poe-golden-fwdcompat"
+POSITIVES="poe-golden poe-golden-tstr-id poe-golden-leaf-only poe-golden-fwdcompat poe-golden-es384-legacy"
 # Negatives MUST be rejected by the PAIR. Either side may be the one that catches
 # it -- poe-negative-base-binds is caught by base alone, which is the point.
 NEGATIVES="poe-negative-bare poe-negative-untagged-profile poe-negative-base-binds"

@@ -58,6 +58,7 @@ normative:
   # RFC2119 / RFC8174 (BCP 14) are pulled in as normative refs automatically by `{::boilerplate bcp14-tagged}`
   RFC9052:    # COSE structures and process
   RFC9053:    # COSE initial algorithms
+  RFC9864:    # Fully-Specified Algorithms for JOSE and COSE (ESP384 etc.)
   RFC9360:    # COSE X.509 (x5chain header parameter)
   RFC9562:    # UUID
   RFC8949:    # CBOR
@@ -329,6 +330,19 @@ root MAY be omitted -- to save bytes when the Verifier holds it out of
 band. Omitting the root from a two-certificate chain leaves a single
 certificate, which is then carried in the bare-`bstr` form (a
 one-element array is not a valid `COSE_X509`).
+
+## Signing algorithm {#signing-alg}
+
+The COSE protected header's `alg` parameter (label 1) MUST be one of
+the two code points the CDDL ({{cddl}}) admits (`1 => -51 / -35`),
+both denoting ECDSA with SHA-384 over the NIST P-384 curve: ESP384
+(`-51`, {{RFC9864}}, Section 2.1) or ES384 (`-35`, {{RFC9053}},
+Section 2.1). A producer SHOULD emit ESP384 (`-51`) and MAY emit ES384
+(`-35`); a Verifier MUST accept either. {{RFC9864}} deprecates the
+polymorphic `-35` in favour of the fully-specified `-51`, but both
+identify the same operation and key representation ({{RFC9864}},
+Section 5), so the choice is confined to the protected header and does
+not affect the CoRIM payload.
 
 ## Refresh URI {#refresh-uri}
 
@@ -650,7 +664,7 @@ readability.
 ~~~ cbor-diag
 18([                                  ; COSE_Sign1
   << {                                ; protected header
-    / alg / 1          : -35,         ; ES384
+    / alg / 1          : -51,         ; ESP384 (-35 also allowed)
     / content-type / 3 : "application/rim+cbor",
     / kid / 4          : h'...',      ; SHA-384 COSE Key Thumbprint
     / CWT-Claims / 15  : {

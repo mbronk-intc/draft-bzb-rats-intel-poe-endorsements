@@ -93,7 +93,8 @@ poe-signed-corim = #6.18([
 ; --- Protected header
 
 poe-protected-header-map = {
-  1  => -35,                        ; alg = ES384
+  1  => -51 / -35,   ; alg: -51 ESP384 (preferred), -35 ES384;
+                     ; both = ECDSA with SHA-384 on P-384 (RFC 9864)
   3  => "application/rim+cbor",     ; content-type
   4  => bstr,                       ; kid (RFC 9679 thumbprint)
   15 => poe-cwt-claims-map,         ; CWT-Claims (REQUIRED)
