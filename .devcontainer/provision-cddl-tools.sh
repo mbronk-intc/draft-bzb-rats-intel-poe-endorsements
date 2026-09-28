@@ -21,7 +21,7 @@ set -uo pipefail
 TOOLS_DIR="${TOOLS_DIR:-$HOME/.local/share/poe-tools}"
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
 CORIM_REPO="${CORIM_REPO:-https://github.com/Azure/corim.git}"
-CORIM_COMMIT="${CORIM_COMMIT:-d798092e4d4baf42d5f87b9d0130662c180b91e4}"  # draft-10; pinned
+CORIM_COMMIT="${CORIM_COMMIT:-9fd338446a824b479c1ab9afe14f8aa303edb540}"  # v0.2.0; pinned
 RUST_VERSION="${RUST_VERSION:-1.85.0}"
 
 mkdir -p "$TOOLS_DIR" "$BIN_DIR"

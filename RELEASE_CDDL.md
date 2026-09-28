@@ -35,13 +35,19 @@ Two complementary checks, both wired into `make check` and CI:
 
 - **`make check-cddl`** ([`scripts/validate-cddl.sh`](scripts/validate-cddl.sh))
   — *grammar*-level: the profile grammar is well-formed and composes with (narrows)
-  base CoRIM, plus an Intel Profile code-point drift guard.
+  base CoRIM, plus an Intel Profile code-point drift guard, an RFC 8610 prelude
+  shadowing guard, and a base-restatement allow-list.
 - **`make test`** ([`scripts/test-cddl.sh`](scripts/test-cddl.sh)) —
-  *instance*-level subset conformance over the `cddl/fixtures/`: the golden and
-  forward-compatible CoRIMs are accepted, and the deliberately malformed negative
-  is rejected, by three engines — Microsoft's `corim-cli` (Azure/corim, the
-  authoritative `draft-ietf-rats-corim-10` decoder and the consumer of POE data),
-  a `pycddl` payload check, and the Ruby `cddl` grammar check. The conformance
+  *instance*-level subset conformance over the `cddl/fixtures/`. The authoritative
+  gate is the Ruby `cddl` reference implementation run against the **real base
+  CoRIM grammar**: positives must be accepted by base, negatives must be
+  rejected by base *and* by this profile. A direct CBOR
+  assertion additionally proves `profile` (key 3) decodes as `#6.32(tstr)`.
+  `pycddl` (profile payload) and `corim-cli` (COSE envelope) are supporting
+  engines; `corim-cli` is deliberately **not** a gate — at the version pinned in
+  `scripts/test-cddl.sh` it returns once the header decodes, and its
+  `--diagnose` pass flags the tagged `#6.32(tstr)` profile as an error because
+  it models the prelude type `uri` as a bare `tstr`. The conformance
   tools are provisioned by the devcontainer
   ([`.devcontainer/provision-cddl-tools.sh`](.devcontainer/provision-cddl-tools.sh))
   and by the *CDDL Conformance* GitHub Action.

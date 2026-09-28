@@ -1,29 +1,37 @@
 ; ============================================================
 ; POE CoRIM profile -- CDDL
 ; Profile identifier: "tag:intel.com,2026:tee.poe#1.0"
-; Narrowing of draft-ietf-rats-corim-10.
+; Narrowing of draft-ietf-rats-corim-10 ([CoRIM]), "base" below.
+; Specified by Internet-Draft draft-bzb-rats-intel-poe-endorsements
+; ("the draft"); bare section names below are its sections.
 ;
-; Dependencies: none at the CDDL level. This grammar is
-; self-contained -- it validates standalone against only the
-; RFC 8610 CDDL prelude (bstr, tstr, int, time, any) and has
-; no file/{::include} dependency on the base CoRIM grammar.
-; It does, however, *semantically* depend on:
-;   [CoRIM] draft-ietf-rats-corim-10 -- the CBOR tag numbers
-;           (#6.18, #6.32, #6.111, #6.501, #6.506), map-key
-;           code points, and the profile-narrowing mechanism.
+; Parses standalone: the only external names are RFC 8610 prelude
+; types (bstr, bytes, tstr, int, time, any) and the `$`/`$$`
+; sockets it extends, which are inert on their own. Base CoRIM is
+; not reproduced here and is not needed to read this file.
+;
+; Validates everything POE constrains on its own: `any` marks the
+; optional points POE defers to base -- exactly the fields a POE
+; verifier ignores. Full CoRIM conformance additionally needs
+; base, which the socket plugs below extend with the POE
+; measurement keys.
+;
+; Tags are written as explicit numbers, not via prelude aliases
+; such as `uri`: several sites pin a literal value inside the tag,
+; which the alias cannot express.
+;
+; Semantic (not CDDL-level) dependencies:
+;   [CoRIM] draft-ietf-rats-corim-10 -- CBOR tag numbers (#6.18,
+;           #6.32, #6.111, #6.501, #6.506), map-key code points,
+;           and the profile-narrowing mechanism.
 ;   [COSE]  RFC 9052 -- the #6.18 COSE_Sign1 envelope and its
 ;           protected/unprotected header label assignments.
-; The base grammar is not vendored here; scripts/validate-cddl.sh
-; fetches it ad-hoc at check time (optionally cached, git-ignored,
-; under cddl/imports/) purely as a cross-check aid. It is not
-; required to parse this file.
 ;
 ; Scope: PRODUCER (emission) grammar -- closed maps mean "a #1.0
 ; producer emits exactly these keys", not "a verifier rejects
-; anything else". Verifier tolerance is normative in the draft's
-; Conformance section (a closed map cannot say "ignore unknowns
-; EXCEPT one key"). The lone forward-compat socket here is the
-; top-level `* (int / tstr) => any` on the unsigned CoRIM map.
+; anything else" (a closed map cannot say "ignore unknowns EXCEPT
+; one key"). Verifier tolerance is normative in the draft's
+; Conformance constraints.
 ; ============================================================
 
 ; --- Profile-private extension keys. Identifiers and the
@@ -32,14 +40,7 @@
 ; --- tee.owner-name (-401) is allocated by this profile. Both
 ; --- are negative-integer private code points per [CoRIM],
 ; --- Section 5.2.1.
-; ---
-; --- The redeclaration below (see header) is value-identical to
-; --- the Intel Profile, so concatenating this profile with the
-; --- Intel Profile grammar is harmless -- CDDL tolerates an
-; --- identical rule redefinition (at most a benign warning) and
-; --- the $tee-*-type sockets merge additively. A *conflicting*
-; --- value would be a spec error: the desired fail-closed
-; --- behaviour.
+; --- Restated value-identically; a conflict is a spec error.
 
 tee.platform-instance-id = -101
 tee.owner-name           = -401
@@ -50,18 +51,27 @@ $tee-platform-instance-id-type /= bstr .size 16
 $tee-platform-instance-id-type /= bstr .size 32
 $tee-owner-name-type           /= tstr .size (1..1024)
 
-; --- Borrowed base aliases (definitions appear in [COSE] /
-; --- [CoRIM]; restated locally for self-containment). Both are
-; --- value-identical to base CoRIM (`cose-label` = int / tstr;
-; --- `uuid-type` = bytes .size 16), so each is a benign identical
-; --- redefinition when composed with base or the Intel grammar.
+; --- Base lacks the -101 / -401 code points; these supply them.
+; --- Its corim-map socket is deliberately left unfilled -- see
+; --- `poe-unsigned-corim-map`.
+
+$$measurement-values-map-extension //= (
+  tee.platform-instance-id => $tee-platform-instance-id-type
+)
+$$measurement-values-map-extension //= (
+  tee.owner-name => $tee-owner-name-type
+)
+
+; --- Borrowed from [COSE] / [CoRIM], restated value-identically
+; --- so this file stays self-contained.
 
 cose-label = int / tstr
 uuid-type  = bytes .size 16   ; untagged UUID (any version)
 
-; --- Profile identifier (RFC 4151 tag URI).
+; --- Profile identifier (RFC 4151 tag URI). Carried through the
+; --- `uri` arm of base CoRIM's $profile-type-choice, hence #6.32
 
-poe-profile-id = "tag:intel.com,2026:tee.poe#1.0"
+poe-profile-id = #6.32("tag:intel.com,2026:tee.poe#1.0")
 
 ; --- OID byte strings (informational; literal pinning is
 ; --- normative in prose, not in CDDL).
@@ -104,19 +114,21 @@ poe-corim-meta-map = {
 }
 
 poe-signer-map = {
-  0 => tstr,                        ; signer-name (== CWT iss)
-  ? 1 => any                        ; signer-uri (base CoRIM)
+  0 => tstr,             ; signer-name (== CWT iss)
+  ? 1 => #6.32(tstr)     ; signer-uri (base: uri)
 }
 
 ; --- Unprotected header
 
 poe-unprotected-header-map = {
-  33 => bstr / [ 2*bstr ],           ; x5chain (COSE_X509, [RFC9360]): leaf-first.
-                                    ; One cert => bare bstr; two-or-more => array.
-                                    ; Every intermediate CA MUST be present; only
-                                    ; the root MAY be omitted. Dropping the root
-                                    ; from a 2-cert chain leaves one cert, encoded
-                                    ; as the bare bstr -- not a 1-element array.
+  33 => bstr / [ 2*bstr ],   ; x5chain (COSE_X509, [RFC9360]):
+                             ; leaf-first. One cert => bare bstr;
+                             ; two-or-more => array. Every
+                             ; intermediate CA MUST be present; only
+                             ; the root MAY be omitted. Dropping the
+                             ; root from a 2-cert chain leaves one
+                             ; cert, encoded as the bare bstr -- not
+                             ; a 1-element array.
   * cose-label => any
 }
 
@@ -129,15 +141,21 @@ poe-tagged-unsigned-corim-map = #6.501(poe-unsigned-corim-map)
 poe-unsigned-corim-map = {
   0 => uuid-type / tstr,             ; id (SHOULD UUIDv8; MAY tstr)
   1 => [ poe-tagged-concise-mid-tag ],   ; tags: exactly one
-  3 => poe-profile-id,              ; profile (tstr; see Profile)
+  3 => poe-profile-id,              ; profile (uri; see Profile)
   4 => poe-validity-map,            ; rim-validity (REQUIRED)
+  ; `any` in this map means "POE adds no constraint" -- the base
+  ; type in each comment still binds, left unrestated so this
+  ; grammar cannot drift against base.
   ? 2 => [ + any ],                 ; dependent-rims: optional,
                                     ; informational, verifier-ignored
+                                    ; (base: [+ corim-locator-map])
   ? 5 => [ + any ],                 ; entities (CoRIM-level):
-                                    ; optional, verifier-ignored
-  ; Sole forward-compat socket in this producer grammar (see header
-  ; Scope note). Keys unknown in #1.0: verifiers MUST ignore;
-  ; producers conforming to #1.0 SHOULD NOT emit (see Conformance).
+                                    ; optional, verifier-ignored.
+                                    ; (base: [+ corim-entity-map] --
+                                    ;  `role` key 2 is MANDATORY)
+  ; Unknown keys: base decides -- rejected unless base defines them,
+  ; so a FUTURE base needs no respin here. #1.0 producers SHOULD NOT
+  ; emit them (Conformance).
   * (int / tstr) => any
 }
 
@@ -160,7 +178,7 @@ poe-concise-mid-tag-map = {
 }
 
 poe-tag-identity-map = {
-  0 => uuid-type / tstr,             ; tag-id (SHOULD UUIDv8; MAY tstr)
+  0 => uuid-type / tstr,          ; tag-id (SHOULD UUIDv8; MAY tstr)
   ; (no tag-version/1 -- see Conformance)
 }
 
@@ -175,13 +193,13 @@ poe-triples-map = {
 ; ------------------------------------------------------------
 
 poe-cond-endorse-triple-record = [
-  conditions:            [ poe-condition-stateful-env ],
-  endorsement-additions: [ poe-endorsement-stateful-env ],
+  conditions:   [ poe-stateful-environment-record ],
+  endorsements: [ poe-endorsed-triple-record ],
 ]
 
 ; --- Conditions side: PIID-bearing environment
 
-poe-condition-stateful-env = [
+poe-stateful-environment-record = [
   environment: poe-piid-environment-map,
   claims-list: [ poe-piid-measurement-map ],  ; [+ measurement-map]
 ]
@@ -202,19 +220,18 @@ poe-piid-measurement-map = {
   ; (no authorized-by/2 -- see Conformance)
 }
 
-; Closed map: the Intel Profile plugs keys into the *open*
-; $$measurement-values-map-extension socket; this profile pins a
-; closed map instead, so exactly one key is permitted and any
-; other is rejected.
+; Closed map: base and the Intel Profile leave
+; $$measurement-values-map-extension open; POE pins exactly one
+; key here, rejecting any other.
 poe-piid-mval-map = {
   tee.platform-instance-id => $tee-platform-instance-id-type,
 }
 
 ; --- Endorsements side: Owner identity
 
-poe-endorsement-stateful-env = [
-  environment:  poe-owner-environment-map,
-  measurements: [ poe-owner-measurement-map ],  ; [+ measurement-map]
+poe-endorsed-triple-record = [
+  condition:   poe-owner-environment-map,
+  endorsement: [ poe-owner-measurement-map ],  ; [+ measurement-map]
 ]
 
 poe-owner-environment-map = {

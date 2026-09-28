@@ -199,7 +199,7 @@ CoRIM map. The CoRIM carries exactly one CoMID containing exactly one
 
 - a `conditions` clause naming the target environment class (an Intel
   platform) and the PIID the endorsement is bound to; and
-- an `endorsements - additions` clause carrying the Owner identity
+- an `endorsements` clause carrying the Owner identity
   claim.
 
 A skeleton (CBOR diagnostic notation) is shown in {{fig-skeleton}}.
@@ -208,7 +208,7 @@ A skeleton (CBOR diagnostic notation) is shown in {{fig-skeleton}}.
 / corim-map / {
   / id           / 0 : ...,            ; per-instance identifier
   / tags         / 1 : [ << concise-mid-tag >> ],
-  / profile      / 3 : "tag:intel.com,2026:tee.poe#1.0",
+  / profile      / 3 : 32("tag:intel.com,2026:tee.poe#1.0"),
   / rim-validity / 4 : { ... }         ; endorsement validity window
 }
 
@@ -217,8 +217,8 @@ A skeleton (CBOR diagnostic notation) is shown in {{fig-skeleton}}.
   / triples      / 4 : {
     / conditional-endorsement-triples / 10 : [
       [
-        / conditions               / [ ... ],
-        / endorsements - additions / [ ... ]
+        / conditions   / [ ... ],
+        / endorsements / [ ... ]
       ]
     ]
   }
@@ -395,13 +395,13 @@ present and MUST be the literal {{RFC4151}}-style tag URI:
 tag:intel.com,2026:tee.poe#1.0
 ~~~
 
-carried as an untagged `tstr` (the `uri` alternative of
-`profile-type-choice`). The fragment carries a `#<major>.<minor>`
-version axis. A breaking change to this profile MUST bump `<major>`;
-a purely additive change that an unaware Verifier can safely ignore
-MAY bump `<minor>`. Per {{CoRIM}}, Section 4.1.4, any change other
-than such a `<minor>` bump constitutes a new profile and MUST be
-assigned a new identifier.
+carried as a `uri` (`#6.32(tstr)`) -- the `uri` arm of
+`profile-type-choice` ({{CoRIM}}, Appendix A). The fragment carries
+a `#<major>.<minor>` version axis. A breaking change to this profile
+MUST bump `<major>`; a purely additive change that an unaware
+Verifier can safely ignore MAY bump `<minor>`. Per {{CoRIM}}, Section
+4.1.4, any change other than such a `<minor>` bump constitutes a new
+profile and MUST be assigned a new identifier.
 
 Verifiers MUST reject the CoRIM if `profile` is absent, is not the
 literal byte-equal string above on the `<major>` axis (current
@@ -629,11 +629,11 @@ Remote Attestation ({{INTEL-PROFILE}}, Section 8.3.6); it is shared
 with the wider Intel `tee.*` namespace and is not exclusive to this
 profile. Key `-401` is allocated here.
 
-Unlike the Intel Profile ({{INTEL-PROFILE}}), which plugs each key
-into the open `$$measurement-values-map-extension` socket, this
-profile pins closed `measurement-values-map`s ({{cddl}}) so that
-exactly one entry is permitted on each of the conditions and
-endorsements sides.
+This profile plugs both keys into the open
+`$$measurement-values-map-extension` socket, as the Intel Profile
+({{INTEL-PROFILE}}) does, but additionally pins closed
+`measurement-values-map`s ({{cddl}}) so that exactly one entry is
+permitted on each of the conditions and endorsements sides.
 
 Per {{CoRIM}}, Section 5.2.1, negative integer keys are reserved for
 per-profile private use and require no IANA action. Keys allocated
@@ -693,7 +693,7 @@ readability.
                     ]
                   ]
                 ],
-                / endorsements - additions / [
+                / endorsements / [
                   [
                     / environment-map / {
                       / class / 0 : {
@@ -719,7 +719,7 @@ readability.
         }
       >> )
     ],
-    / profile      / 3 : "tag:intel.com,2026:tee.poe#1.0",
+    / profile      / 3 : 32("tag:intel.com,2026:tee.poe#1.0"),
     / rim-validity / 4 : {
       / not-before / 0 : 1(1780358400),  ; 2026-06-02T00:00:00Z
       / not-after  / 1 : 1(1938124800)   ; 2031-06-02T00:00:00Z

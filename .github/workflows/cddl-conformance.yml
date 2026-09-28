@@ -1,10 +1,12 @@
 name: "CDDL Conformance"
 
 # Instance-level conformance for the POE profile: prove it is a genuine subset of
-# base CoRIM. `make test` validates that the golden + forward-compatible fixtures
-# are accepted -- and the negative fixture rejected -- by the authoritative base
-# decoder (Microsoft's corim-cli, draft-ietf-rats-corim-10), the pycddl payload
-# check, and the Ruby cddl grammar check. See scripts/test-cddl.sh + RELEASE_CDDL.md.
+# base CoRIM. `make test` validates every fixture against the base CoRIM
+# grammar (draft-ietf-rats-corim-10) through the Ruby cddl reference
+# implementation -- positives accepted, negatives rejected by base AND by the
+# profile -- plus a direct check that the profile identifier is recognized.
+# pycddl and corim-cli are supporting engines; neither is a gate.
+# See scripts/test-cddl.sh + RELEASE_CDDL.md.
 #
 # The manual-only `make fuzz` target is deliberately NOT run here (non-deterministic).
 
@@ -59,14 +61,14 @@ jobs:
       uses: actions/cache@v6
       with:
         path: ~/.local/bin/corim-cli
-        key: corim-cli-d798092
+        key: corim-cli-9fd3384
 
-    - name: "Build corim-cli (Azure/corim, draft-10)"
+    - name: "Build corim-cli (Azure/corim v0.2.0)"
       if: steps.corim-cache.outputs.cache-hit != 'true'
       run: |
         mkdir -p "$HOME/.local/bin"
         git clone --quiet https://github.com/Azure/corim.git /tmp/azure-corim
-        git -C /tmp/azure-corim checkout --quiet d798092e4d4baf42d5f87b9d0130662c180b91e4
+        git -C /tmp/azure-corim checkout --quiet 9fd338446a824b479c1ab9afe14f8aa303edb540
         (cd /tmp/azure-corim && cargo build --quiet -p corim-cli --release)
         cp /tmp/azure-corim/target/release/corim-cli "$HOME/.local/bin/corim-cli"
 

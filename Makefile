@@ -46,14 +46,14 @@ check:: check-cddl
 
 ## Instance-level conformance test (separate from the grammar `check-cddl`).
 ##
-## `make test` validates concrete fixtures: a base-correct POE CoRIM is accepted
-## by the authoritative base decoder (Microsoft's corim-cli, draft-ietf-rats-corim
-## -10) AND by this profile; a forward-compatible one (with optional/unknown
-## top-level keys) is still accepted; and a deliberately malformed one is rejected
-## -- proving the profile is a genuine subset of base CoRIM and guarding against
-## regressions. Wired into the default `check` flow and CI. The three-engine setup
-## (corim-cli + pycddl + the Ruby cddl grammar check) is provisioned by the
-## devcontainer.
+## `make test` validates concrete fixtures against the base CoRIM grammar
+## (draft-ietf-rats-corim-10) via the Ruby `cddl` reference implementation --
+## the authoritative gate. Positives MUST be accepted by base; negatives MUST
+## be rejected by base AND by this profile. A direct CBOR assertion then proves
+## the profile identifier is recognized, so "the CoRIM was accepted" cannot
+## stand in for "the profile was recognized". pycddl and corim-cli are
+## supporting engines only -- see the caveats in scripts/test-cddl.sh; neither
+## is a conformance gate. Wired into the default `check` flow and CI.
 .PHONY: test
 test: $(POE_CDDL)
 	scripts/test-cddl.sh

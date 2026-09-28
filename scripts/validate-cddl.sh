@@ -146,6 +146,72 @@ else
   echo "extracted profile CDDL: $(wc -l < "$profile") lines from $DRAFT"
 fi
 
+# --- 1b. Structural guards on the profile grammar itself.
+#
+# These are lexical, tool-independent, and run before anything is fetched. They
+# exist because the `cddl` tool only complains about a redefinition that
+# *conflicts*; a redefinition that happens to be value-identical today passes
+# silently and then diverges the moment the prelude or the base grammar moves.
+#
+#   (a) PRELUDE GUARD -- the profile MUST NOT define or extend a name from the
+#       RFC 8610 Appendix D standard prelude. Shadowing `uri`, `time`, `bytes`,
+#       ... silently redefines every use site, including ones inside the base
+#       grammar it is composed with; `uri` IS `#6.32(tstr)`, so blurring it
+#       changes the wire format.
+#   (b) BASE-RESTATEMENT ALLOW-LIST -- this grammar is deliberately
+#       self-contained, so it restates a couple of base CoRIM aliases. That is
+#       only safe while each restatement is value-identical to base. A
+#       *conflicting* one is caught by the composition check in step 4; a *new*
+#       one is caught here, so adding it stays a conscious decision.
+#   (c) LINE-WIDTH GUARD -- this file is {::include}d into the draft's `~~~ cddl`
+#       block, which xml2rfc renders indented by 3 into the 72-column RFC text
+#       form. Anything wider is silently emitted over-long and wraps mid-token,
+#       so the canonical text rendering of the grammar becomes unreadable.
+RESTATED_BASE_RULES_ALLOWED="${RESTATED_BASE_RULES_ALLOWED:-cose-label uuid-type}"
+
+# RFC 8610 Appendix D standard prelude.
+CDDL_PRELUDE_NAMES="any uint nint int bstr bytes tstr text tdate time number
+biguint bignint bigint integer unsigned decfrac bigfloat eb64url eb64legacy eb16
+encoded-cbor uri b64url b64legacy regexp mime-message cbor-any float16 float32
+float64 float16-32 float32-64 float false true bool nil null undefined"
+
+# Rule heads: `name = ...`, `name /= ...`, `name //= ...`, `name<params> = ...`.
+# Comments are stripped first so a `;`-commented example never counts as a rule.
+cddl_rule_names() {
+  sed -E 's/;.*$//' "$1" \
+    | grep -oE '^[[:space:]]*[A-Za-z@_$][A-Za-z0-9@_$.-]*([[:space:]]*<[^>]*>)?[[:space:]]*(\/\/=|\/=|=)' \
+    | sed -E 's/[[:space:]]*(<[^>]*>)?[[:space:]]*(\/\/=|\/=|=)$//; s/^[[:space:]]*//' \
+    | sort -u
+}
+
+echo "checking the profile does not shadow the RFC 8610 prelude..."
+prelude_violations=""
+for name in $(cddl_rule_names "$profile"); do
+  case " $(echo "$CDDL_PRELUDE_NAMES" | tr '\n' ' ') " in
+    *" $name "*) prelude_violations="$prelude_violations $name" ;;
+  esac
+done
+if [[ -n "$prelude_violations" ]]; then
+  echo "error: the profile redefines RFC 8610 prelude name(s):$prelude_violations" >&2
+  echo "       A prelude name means one thing everywhere. Rename the rule, or use" >&2
+  echo "       the prelude type directly (e.g. uri = #6.32(tstr))." >&2
+  exit 6
+fi
+echo "    no prelude name is redefined."
+
+# 72-column RFC text width, less the 3-space <sourcecode> indent.
+MAX_CDDL_WIDTH="${MAX_CDDL_WIDTH:-69}"
+echo "checking no line exceeds $MAX_CDDL_WIDTH columns..."
+if ! awk -v max="$MAX_CDDL_WIDTH" '
+  length($0) > max { printf "    L%-4d %3d cols | %s\n", NR, length($0), $0; bad=1 }
+  END { exit bad }
+' "$profile"; then
+  echo "error: line(s) above exceed $MAX_CDDL_WIDTH columns, so the draft's RFC" >&2
+  echo "       text rendering wraps them mid-token. Reflow them." >&2
+  exit 7
+fi
+echo "    all lines fit the RFC text width."
+
 # --- 2. Obtain the base CoRIM CDDL (local file or URL).
 if [[ -f "$BASE_CDDL" ]]; then
   cp "$BASE_CDDL" "$base"
@@ -161,6 +227,32 @@ else
     exit 4
   fi
 fi
+
+# --- 2b. Base-restatement allow-list (guard (b) from step 1b).
+echo "checking which base CoRIM rules the profile restates..."
+restated=""
+base_names="$(cddl_rule_names "$base")"
+for name in $(cddl_rule_names "$profile"); do
+  case " $(echo "$base_names" | tr '\n' ' ') " in
+    *" $name "*) restated="$restated $name" ;;
+  esac
+done
+unexpected=""
+for name in $restated; do
+  case " $RESTATED_BASE_RULES_ALLOWED " in
+    *" $name "*) ;;
+    *) unexpected="$unexpected $name" ;;
+  esac
+done
+if [[ -n "$unexpected" ]]; then
+  echo "error: the profile restates base CoRIM rule(s) not on the allow-list:$unexpected" >&2
+  echo "       A restatement is safe only while it stays value-identical to base." >&2
+  echo "       Either drop the local copy, or add the name to" >&2
+  echo "       RESTATED_BASE_RULES_ALLOWED (currently: $RESTATED_BASE_RULES_ALLOWED)" >&2
+  echo "       after confirming it matches base exactly." >&2
+  exit 6
+fi
+echo "    restates (allow-listed):${restated:- none}"
 
 # --- 3. Concatenate: base first, profile fragment second (profile narrows base).
 {
