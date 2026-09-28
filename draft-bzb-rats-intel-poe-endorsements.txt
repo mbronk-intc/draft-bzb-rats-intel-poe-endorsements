@@ -78,12 +78,13 @@ Table of Contents
        3.1.1.  Producer requirements
        3.1.2.  Verifier requirements
      3.2.  Signer metadata
-     3.3.  Refresh URI
-     3.4.  CoRIM-level fields
-       3.4.1.  Identifier
-       3.4.2.  Tags cardinality
-       3.4.3.  Profile
-       3.4.4.  Validity
+     3.3.  Signing algorithm
+     3.4.  Refresh URI
+     3.5.  CoRIM-level fields
+       3.5.1.  Identifier
+       3.5.2.  Tags cardinality
+       3.5.3.  Profile
+       3.5.4.  Validity
    4.  POE CoMID Encoding
      4.1.  Tag Identity
      4.2.  Single-record cardinality
@@ -229,7 +230,7 @@ Table of Contents
    an asymmetric conformance model: a producer emits only what this
    profile defines, while a Verifier tolerates unknown additions so that
    a future #1.<minor> revision stays backward compatible (see
-   Section 3.4.3).
+   Section 3.5.3).
 
    The accompanying CDDL (Appendix A) is a _producer_ (emission)
    grammar: its closed maps state what a conformant #1.0 producer emits,
@@ -241,7 +242,7 @@ Table of Contents
 
    A producer conforming to this profile (version #1.0) SHOULD NOT emit
    top-level CoRIM keys other than those this profile defines
-   (Section 3.4.1, Section 3.4.2, Section 3.4.3, Section 3.4.4, and the
+   (Section 3.5.1, Section 3.5.2, Section 3.5.3, Section 3.5.4, and the
    optional base fields below), and MUST NOT:
 
    *  populate the COSE crit header parameter ([RFC9052], Section 3.1);
@@ -272,7 +273,7 @@ Table of Contents
 
    *  a / profile / 3 mismatch;
 
-   *  a cardinality violation (Section 3.4.2, Section 4.2); or
+   *  a cardinality violation (Section 3.5.2, Section 4.2); or
 
    *  a measurement-map.authorized-by (issuer authorisation is conveyed
       by the COSE x5chain trust chain, not by a per-measurement key; see
@@ -322,9 +323,19 @@ Table of Contents
    Common Name ([RFC5280], Section 4.1.2.6) so the human-readable signer
    label cannot be decoupled from the cryptographically-bound identity
    in x5chain.  Signature lifetime is conveyed by the x5chain
-   (Section 3.4.4); the CWT nbf (key 5) and exp (key 4) claims
+   (Section 3.5.4); the CWT nbf (key 5) and exp (key 4) claims
    ([RFC8392]) -- and, if corim-meta is present, its signature-validity
    field -- MUST NOT be present.
+
+   The signing key is identified by kid (label 4), the COSE Key
+   Thumbprint ([RFC9679]) of the x5chain leaf public key.  [RFC9052]
+   (Section 3.1) treats kid as a non-critical hint that MAY sit in
+   either the protected or the unprotected header.  The CDDL lists it as
+   optional (? 4 => bstr) in both maps, but kid MUST appear in exactly
+   one -- never both, never neither (a constraint the CDDL cannot
+   express).  The Intel #1.0 generator emits it in the protected header;
+   either placement is conformant and a Verifier MUST accept whichever
+   bucket it appears in.
 
    The x5chain ([RFC9360]) is a COSE_X509 value, ordered leaf-first: a
    single certificate is carried as a bare bstr, two or more as a CBOR
@@ -335,7 +346,20 @@ Table of Contents
    leaves a single certificate, which is then carried in the bare-bstr
    form (a one-element array is not a valid COSE_X509).
 
-3.3.  Refresh URI
+3.3.  Signing algorithm
+
+   The COSE protected header's alg parameter (label 1) MUST be one of
+   the two code points the CDDL (Appendix A) admits (1 => -51 / -35),
+   both denoting ECDSA with SHA-384 over the NIST P-384 curve: ESP384
+   (-51, [RFC9864], Section 2.1) or ES384 (-35, [RFC9053], Section 2.1).
+   A producer SHOULD emit ESP384 (-51) and MAY emit ES384 (-35); a
+   Verifier MUST accept either.  [RFC9864] deprecates the polymorphic
+   -35 in favour of the fully-specified -51, but both identify the same
+   operation and key representation ([RFC9864], Section 5), so the
+   choice is confined to the protected header and does not affect the
+   CoRIM payload.
+
+3.4.  Refresh URI
 
    This profile defines one optional COSE protected-header parameter,
    tee.refresh-uri, a forward-pointer to where a fresh POE for this
@@ -354,9 +378,9 @@ Table of Contents
    tee.refresh-uri imposes no appraisal-time fetch obligation -- it is
    an out-of-band hint for obtaining a later POE.
 
-3.4.  CoRIM-level fields
+3.5.  CoRIM-level fields
 
-3.4.1.  Identifier
+3.5.1.  Identifier
 
    The CoRIM id field (key 0, corim-id-type-choice) is per-instance:
    each (PIID, owner) change and each validity-window refresh produces a
@@ -378,7 +402,7 @@ Table of Contents
    that use both derivations MUST compute tag-id first, embed the CoMID,
    then compute id.
 
-3.4.2.  Tags cardinality
+3.5.2.  Tags cardinality
 
    The CoRIM tags field (key 1) MUST contain exactly one entry under
    this profile.  That entry MUST be a Platform Ownership CoMID
@@ -390,7 +414,7 @@ Table of Contents
    an entry that is not a POE CoMID.  Issuers needing batch issuance
    MUST emit one CoRIM per platform.
 
-3.4.3.  Profile
+3.5.3.  Profile
 
    The CoRIM profile field (key 3, profile-type-choice) MUST be present
    and MUST be the literal [RFC4151]-style tag URI:
@@ -414,7 +438,7 @@ Table of Contents
    does not recognise, subject to the "MUST NOT be present" restrictions
    in this profile.
 
-3.4.4.  Validity
+3.5.4.  Validity
 
    The CoRIM rim-validity field (key 4, validity-map) is REQUIRED under
    this profile, with both not-before (key 0) and not-after (key 1)
@@ -450,7 +474,7 @@ Table of Contents
 
    *  tag-id (key 0): identifies the (platform, owner) binding.  Issuers
       SHOULD encode tag-id by the same UUIDv8 / left-truncated SHA-384 /
-      CDE mechanism as corim-id (Section 3.4.1), computed over this
+      CDE mechanism as corim-id (Section 3.5.1), computed over this
       CoMID's / triples / 4 map.  The derivation is deterministic for a
       given triples content, so a validity-window refresh (since rim-
       validity lives at the CoRIM level) yields the same tag-id, whereas
@@ -476,7 +500,7 @@ Table of Contents
    validity window, and revocation lifecycle.  Multiple bindings --
    different platforms, different owners, or alternative conditions on
    the same platform -- MUST be carried as separate CoRIMs (this profile
-   pins / tags / 1 to exactly one CoMID; see Section 3.4.2).
+   pins / tags / 1 to exactly one CoMID; see Section 3.5.2).
 
    Generators MUST emit exactly one record per CoMID; Verifiers MUST
    reject a CoMID carrying zero or more-than-one record under this
@@ -650,7 +674,7 @@ Table of Contents
 
    18([                                  ; COSE_Sign1
      << {                                ; protected header
-       / alg / 1          : -35,         ; ES384
+       / alg / 1          : -51,         ; ESP384 (-35 also allowed)
        / content-type / 3 : "application/rim+cbor",
        / kid / 4          : h'...',      ; SHA-384 COSE Key Thumbprint
        / CWT-Claims / 15  : {
@@ -776,7 +800,7 @@ Table of Contents
 
    This profile defines no in-band revocation mechanism for individual
    POEs.  Issuers MUST bound POE validity windows for their deployment
-   (see Section 3.4.4), and SHOULD refresh a POE before its window
+   (see Section 3.5.4), and SHOULD refresh a POE before its window
    elapses; Intel TCB Recovery is a natural refresh trigger on Intel
    platforms, keeping the POE and PCK certificate in lock-step
    ([SGX-PCK]).
@@ -808,7 +832,7 @@ Table of Contents
 
    This document requests no IANA action.
 
-   The profile identifier (Section 3.4.3) is an [RFC4151] tag URI
+   The profile identifier (Section 3.5.3) is an [RFC4151] tag URI
    (tag:intel.com,2026:tee.poe#1.0); per RFC 4151, no registration is
    required.  The DNS authority intel.com is under the control of Intel
    Corporation, and the year 2026 pins the allocation per RFC 4151,
@@ -905,6 +929,12 @@ Table of Contents
               DOI 10.17487/RFC9679, December 2024,
               <https://www.rfc-editor.org/rfc/rfc9679>.
 
+   [RFC9864]  Jones, M.B. and O. Steele, "Fully-Specified Algorithms for
+              JSON Object Signing and Encryption (JOSE) and CBOR Object
+              Signing and Encryption (COSE)", RFC 9864,
+              DOI 10.17487/RFC9864, October 2025,
+              <https://www.rfc-editor.org/rfc/rfc9864>.
+
 9.2.  Informative References
 
    [INTEL-PROFILE]
@@ -956,10 +986,10 @@ Appendix A.  CDDL
       across tools);
 
    *  the UUIDv8/SHA-384/CDE derivation rule for tag-id (Section 4.1)
-      and corim-id (Section 3.4.1);
+      and corim-id (Section 3.5.1);
 
    *  the intersection of rim-validity with the COSE x5chain validity
-      (Section 3.4.4);
+      (Section 3.5.4);
 
    *  the mkey string recommendations of "tee.poe.platform-binding" and
       "tee.poe.ownership-claims" (Section 4.3, Section 4.4);
@@ -1062,9 +1092,14 @@ Appendix A.  CDDL
    ; --- Protected header
 
    poe-protected-header-map = {
-     1  => -35,                        ; alg = ES384
+     1  => -51 / -35,   ; alg: -51 ESP384 (preferred), -35 ES384;
+                        ; both = ECDSA with SHA-384 on P-384 (RFC 9864)
      3  => "application/rim+cbor",     ; content-type
-     4  => bstr,                       ; kid (RFC 9679 thumbprint)
+     ? 4 => bstr,                      ; kid: RFC 9679 thumbprint.
+                                       ; MAY sit here OR in the
+                                       ; unprotected map; present in
+                                       ; exactly one bucket, never
+                                       ; both (see Signer metadata).
      15 => poe-cwt-claims-map,         ; CWT-Claims (REQUIRED)
      ? 8 => bstr .cbor poe-corim-meta-map,  ; corim-meta (legacy)
      ? "tee.refresh-uri" => #6.32(tstr),    ; optional refresh URI
@@ -1098,6 +1133,9 @@ Appendix A.  CDDL
                                 ; root from a 2-cert chain leaves one
                                 ; cert, encoded as the bare bstr -- not
                                 ; a 1-element array.
+     ? 4 => bstr,               ; kid MAY sit here instead of the
+                                ; protected map (symmetric; exactly
+                                ; one bucket).
      * cose-label => any
    }
 
