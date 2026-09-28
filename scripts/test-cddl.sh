@@ -77,7 +77,7 @@ PROFILE_ID="${PROFILE_ID:-tag:intel.com,2026:tee.poe#1.0}"
 BASE_CDDL="${BASE_CDDL:-cddl/imports/corim-autogen.cddl}"
 
 # Positives MUST be accepted by base CoRIM and by this profile.
-POSITIVES="poe-golden poe-golden-tstr-id poe-golden-leaf-only poe-golden-fwdcompat poe-golden-es384-legacy"
+POSITIVES="poe-golden poe-golden-tstr-id poe-golden-leaf-only poe-golden-fwdcompat poe-golden-es384-legacy poe-golden-kid-unprotected"
 # Negatives MUST be rejected by the PAIR. Either side may be the one that catches
 # it -- poe-negative-base-binds is caught by base alone, which is the point.
 NEGATIVES="poe-negative-bare poe-negative-untagged-profile poe-negative-base-binds"
@@ -175,6 +175,24 @@ for f in $NEGATIVES; do
     ok "$f rejected (by the profile only)"
   else
     ok "$f rejected by base CoRIM and by the profile"
+  fi
+done
+
+# --- Engine 1b: COSE header placement -- kid bucket [AUTHORITATIVE] --------------
+# The payload engines above extract element [2] and never see the COSE headers, so
+# kid's bucket is invisible to them. Validate the FULL envelope against the
+# profile's poe-signed-corim root to prove the grammar accepts kid in EITHER
+# header map: poe-golden carries it in the protected map,
+# poe-golden-kid-unprotected in the unprotected map. (CDDL cannot enforce
+# exactly-one-bucket; that is prose.)
+note "COSE header placement (kid accepted in either bucket, $ROOT_RULE root):"
+{ echo "poe-signed-root = $ROOT_RULE"; echo; cat "$PROFILE_CDDL"; } > "$work/signed.cddl"
+for pair in poe-golden:protected poe-golden-kid-unprotected:unprotected; do
+  f="${pair%%:*}"; bucket="${pair##*:}"
+  if accepts "$work/signed.cddl" "$FIXTURES_DIR/$f.cbor"; then
+    ok "$f envelope accepted (kid in $bucket header)"
+  else
+    bad "$f envelope REJECTED by $ROOT_RULE (kid in $bucket header)"
   fi
 done
 

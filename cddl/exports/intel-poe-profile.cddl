@@ -96,7 +96,11 @@ poe-protected-header-map = {
   1  => -51 / -35,   ; alg: -51 ESP384 (preferred), -35 ES384;
                      ; both = ECDSA with SHA-384 on P-384 (RFC 9864)
   3  => "application/rim+cbor",     ; content-type
-  4  => bstr,                       ; kid (RFC 9679 thumbprint)
+  ? 4 => bstr,                      ; kid: RFC 9679 thumbprint.
+                                    ; MAY sit here OR in the
+                                    ; unprotected map; present in
+                                    ; exactly one bucket, never
+                                    ; both (see Signer metadata).
   15 => poe-cwt-claims-map,         ; CWT-Claims (REQUIRED)
   ? 8 => bstr .cbor poe-corim-meta-map,  ; corim-meta (legacy)
   ? "tee.refresh-uri" => #6.32(tstr),    ; optional refresh URI
@@ -130,6 +134,9 @@ poe-unprotected-header-map = {
                              ; root from a 2-cert chain leaves one
                              ; cert, encoded as the bare bstr -- not
                              ; a 1-element array.
+  ? 4 => bstr,               ; kid MAY sit here instead of the
+                             ; protected map (symmetric; exactly
+                             ; one bucket).
   * cose-label => any
 }
 

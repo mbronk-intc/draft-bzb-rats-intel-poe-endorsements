@@ -29,6 +29,16 @@ under this directory:
                                 RFC 9864). MUST be accepted -- the profile admits
                                 both P-384/SHA-384 code points; every other
                                 fixture uses -51, this one pins the -35 arm.
+  poe-golden-kid-unprotected.cbor
+                             -- the golden CoRIM with `kid` (label 4) carried in
+                                the UNPROTECTED header instead of the protected
+                                one. MUST be accepted -- RFC 9052 (Section 3.1)
+                                allows `kid` in either bucket and the profile
+                                lists it as `? 4 => bstr` in both. Its extracted
+                                payload is identical to golden, so this placement
+                                is exercised only by the envelope-root
+                                (`poe-signed-corim`) engine, not the payload
+                                engines.
 
 Negatives -- each MUST be rejected by base CoRIM, by this profile, or by both; a
 fixture accepted by BOTH no longer exercises a defect. Which side catches it is
@@ -88,7 +98,8 @@ def _comid(bare=False, tstr_id=False):
 
 
 def _signed_corim(bare=False, fwdcompat=False, tstr_id=False, single_cert=False,
-                  untagged_profile=False, base_illegal_locator=False, alg=-51):
+                  untagged_profile=False, base_illegal_locator=False, alg=-51,
+                  kid_unprotected=False):
     corim_map = {
         0: "corim-id.example" if tstr_id else bytes(16),
         1: [_tag(506, cbor2.dumps(_comid(bare, tstr_id)))],   # #6.506(bstr .cbor concise-mid-tag)
@@ -105,12 +116,17 @@ def _signed_corim(bare=False, fwdcompat=False, tstr_id=False, single_cert=False,
         corim_map[2] = [bytes(8)]
     payload = cbor2.dumps(_tag(501, corim_map))
     # alg -51 = ESP384 (preferred), -35 = ES384 (legacy); both ECDSA/P-384/SHA-384.
-    protected = cbor2.dumps({1: alg, 3: "application/rim+cbor", 4: bytes(48),
-                             15: {1: "csp.example"}})
+    prot = {1: alg, 3: "application/rim+cbor"}
+    if not kid_unprotected:
+        prot[4] = bytes(48)          # kid: RFC 9679 thumbprint, protected bucket
+    prot[15] = {1: "csp.example"}
+    protected = cbor2.dumps(prot)
     # x5chain (COSE_X509, RFC 9360): a single cert is a BARE bstr; two-or-more
     # use the array form. single_cert exercises the bare-bstr leaf-only shape.
     x5chain = bytes(64) if single_cert else [bytes(64), bytes(64)]
     unprotected = {33: x5chain}
+    if kid_unprotected:
+        unprotected[4] = bytes(48)   # kid in the unprotected bucket (? 4 arm)
     return cbor2.dumps(_tag(18, [protected, unprotected, payload, bytes(96)]))
 
 
@@ -121,6 +137,7 @@ def main():
         "poe-golden-tstr-id.cbor": _signed_corim(tstr_id=True),
         "poe-golden-leaf-only.cbor": _signed_corim(single_cert=True),
         "poe-golden-es384-legacy.cbor": _signed_corim(alg=-35),
+        "poe-golden-kid-unprotected.cbor": _signed_corim(kid_unprotected=True),
         "poe-negative-bare.cbor": _signed_corim(bare=True),
         "poe-negative-untagged-profile.cbor": _signed_corim(untagged_profile=True),
         "poe-negative-base-binds.cbor": _signed_corim(base_illegal_locator=True),

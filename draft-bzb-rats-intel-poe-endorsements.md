@@ -322,6 +322,16 @@ identity in `x5chain`. Signature lifetime is conveyed by the
 claims ({{RFC8392}}) -- and, if `corim-meta` is present, its
 `signature-validity` field -- MUST NOT be present.
 
+The signing key is identified by `kid` (label 4), the COSE Key
+Thumbprint ({{RFC9679}}) of the `x5chain` leaf public key. {{RFC9052}}
+(Section 3.1) treats `kid` as a non-critical hint that MAY sit in
+either the protected or the unprotected header. The CDDL lists it as
+optional (`? 4 => bstr`) in both maps, but `kid` MUST appear in
+exactly one -- never both, never neither (a constraint the CDDL
+cannot express). The Intel #1.0 generator emits it in the protected
+header; either placement is conformant and a Verifier MUST accept
+whichever bucket it appears in.
+
 The `x5chain` ({{RFC9360}}) is a `COSE_X509` value, ordered leaf-first:
 a single certificate is carried as a bare `bstr`, two or more as a CBOR
 array (`[ 2*bstr ]`). It MUST carry the leaf (end-entity) signing
