@@ -41,6 +41,14 @@
 #                    neither the profile field nor the payload structure.
 #   5. scripts/validate-cddl.sh -- grammar well-formedness, the RFC 8610 prelude
 #                    guard, and the base-restatement allow-list.
+#   6. real-world example -- the Intel-tooling actuals under cddl/examples/ (a
+#                    genuine unsigned->signed pair, real 2-cert x5chain + ES384
+#                    signature). Asserts the standalone unsigned file IS the
+#                    signed payload, that both validate under base AND profile,
+#                    that the signed envelope validates under the profile's own
+#                    `poe-signed-corim` root (which the synthetic fixtures never
+#                    exercise), and that each committed .diag round-trips to its
+#                    .cbor. Authoritative where it uses the Ruby `cddl` gate.
 #
 # All tools are provisioned by the devcontainer; see .devcontainer. Engine 1
 # requires the Ruby `cddl` gem and the base CoRIM grammar (fetched by
@@ -69,6 +77,7 @@ cd "$here"
 
 PROFILE_CDDL="${PROFILE_CDDL:-cddl/exports/intel-poe-profile.cddl}"
 FIXTURES_DIR="${FIXTURES_DIR:-cddl/fixtures}"
+EXAMPLES_DIR="${EXAMPLES_DIR:-cddl/examples}"
 CORIM_CLI="${CORIM_CLI:-corim-cli}"
 PYCDDL_PY="${PYCDDL_PY:-$HOME/.local/share/poe-tools/cddlvenv/bin/python}"
 ROOT_RULE="${ROOT_RULE:-poe-signed-corim}"
@@ -271,6 +280,70 @@ if scripts/validate-cddl.sh >/dev/null 2>&1; then
 else
   bad "validate-cddl.sh reported a grammar problem"
 fi
+
+# --- Engine 6: real-world examples (Intel-tooling actuals) ----------------------
+# cddl/examples/ holds genuine unsigned->signed pairs emitted by the Intel POE
+# tooling -- each a full COSE_Sign1 (real 2-cert x5chain + ECDSA/P-384 signature)
+# and the standalone unsigned CoRIM that is its payload, plus each one's .diag.
+# Unlike the synthetic fixtures, these drive the profile's own `poe-signed-corim`
+# envelope root end to end. Two pairs are checked, covering both COSE header
+# placements of kid and both alg code points:
+#   - poe-corim-1.0-*             : kid in the protected header, alg -51 (ESP384)
+#   - poe-corim-1.0-*-kid-unprot  : kid in the unprotected header, alg -35 (ES384)
+note "real-world examples (cddl/examples, Intel-tooling actuals) [AUTHORITATIVE]:"
+{ echo "poe-signed-root = $ROOT_RULE"; echo; cat "$PROFILE_CDDL"; } > "$work/signed.cddl"
+
+check_example_pair() {   # <unsigned-base> <signed-base> <label>
+  local ub="$1" sb="$2" label="$3"
+  local u="$EXAMPLES_DIR/$ub.cbor" s="$EXAMPLES_DIR/$sb.cbor"
+  if [[ ! -f "$u" || ! -f "$s" ]]; then
+    bad "missing example(s) for $label (expected $ub.cbor and $sb.cbor)"; return
+  fi
+  # provenance: the standalone unsigned file IS the signed envelope's payload.
+  if EX_U="$u" EX_S="$s" "$EXTRACT_PY" - <<'PY'
+import os, sys, cbor2
+u = open(os.environ["EX_U"], "rb").read()
+p = cbor2.loads(open(os.environ["EX_S"], "rb").read()).value[2]
+sys.exit(0 if u == p else 1)
+PY
+  then ok "$label: unsigned is byte-identical to the signed envelope payload"
+  else bad "$label: unsigned != signed envelope payload"; fi
+  # authoritative: unsigned payload accepted by base CoRIM AND the profile.
+  if accepts "$work/base.cddl" "$u" && accepts "$work/profile.cddl" "$u"; then
+    ok "$label: unsigned accepted by base CoRIM and by the profile"
+  else
+    bad "$label: unsigned REJECTED by base or profile"
+  fi
+  # authoritative: signed envelope accepted by the profile's poe-signed-corim root.
+  if accepts "$work/signed.cddl" "$s"; then
+    ok "$label: signed accepted by the profile ($ROOT_RULE envelope root)"
+  else
+    bad "$label: signed REJECTED by the profile envelope root"
+  fi
+  # optional: corim-cli envelope smoke check.
+  if command -v "$CORIM_CLI" >/dev/null 2>&1; then
+    "$CORIM_CLI" validate --skip-expiry "$s" >/dev/null 2>&1 \
+      && ok "$label: signed envelope decodes (corim-cli)" || bad "$label: signed rejected by corim-cli"
+  fi
+  # committed diag fidelity: each .diag MUST round-trip byte-identically.
+  if command -v diag2cbor.rb >/dev/null 2>&1; then
+    for b in "$ub" "$sb"; do
+      if [[ -f "$EXAMPLES_DIR/$b.diag" ]] \
+         && diag2cbor.rb "$EXAMPLES_DIR/$b.diag" 2>/dev/null | cmp -s - "$EXAMPLES_DIR/$b.cbor"; then
+        ok "$b.diag round-trips byte-identical to $b.cbor"
+      else
+        bad "$b.diag does not round-trip to $b.cbor"
+      fi
+    done
+  else
+    note "  diag2cbor.rb not available -- skipping .diag round-trip (optional)"
+  fi
+}
+
+check_example_pair poe-corim-1.0-unsigned poe-corim-1.0-signed \
+  "kid in protected / ESP384 (-51)"
+check_example_pair poe-corim-1.0-unsigned-kid-unprot poe-corim-1.0-signed-kid-unprot \
+  "kid in unprotected / ES384 (-35)"
 
 echo
 if [[ "$fail" -eq 0 ]]; then

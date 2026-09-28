@@ -68,6 +68,20 @@ FIXTURES_PY ?= $(firstword $(wildcard $(HOME)/.local/share/poe-tools/cddlvenv/bi
 fixtures:
 	$(FIXTURES_PY) $(POE_FIXTURES)/make-fixtures.py
 
+## (Re)generate the committed diagnostic-notation (.diag) renderings of the
+## example actuals under cddl/examples/ from their .cbor. The .cbor files are the
+## source of truth -- a real unsigned->signed pair emitted by the Intel POE
+## tooling; run this after replacing them, then commit the regenerated .diag.
+POE_EXAMPLES := cddl/examples
+.PHONY: examples
+examples:
+	scripts/dump-diag.sh $(POE_EXAMPLES)/poe-corim-1.0-unsigned.cbor -o $(POE_EXAMPLES)/poe-corim-1.0-unsigned.diag
+	scripts/dump-diag.sh $(POE_EXAMPLES)/poe-corim-1.0-signed.cbor   -o $(POE_EXAMPLES)/poe-corim-1.0-signed.diag
+	scripts/dump-diag.sh $(POE_EXAMPLES)/poe-corim-1.0-unsigned-kid-unprot.cbor -o $(POE_EXAMPLES)/poe-corim-1.0-unsigned-kid-unprot.diag
+	scripts/dump-diag.sh $(POE_EXAMPLES)/poe-corim-1.0-signed-kid-unprot.cbor   -o $(POE_EXAMPLES)/poe-corim-1.0-signed-kid-unprot.diag
+	# Prior-revision (-01) sample, retained for reference/regression only.
+	scripts/dump-diag.sh $(POE_EXAMPLES)/deprecated/poe-corim-1.0-unsigned.bare-profile.cbor -o $(POE_EXAMPLES)/deprecated/poe-corim-1.0-unsigned.bare-profile.diag
+
 ## Manual-only grammar fuzz (NOT part of `check`/CI). Generates random valid
 ## instances and reports how the decoders react; noisy by design -- a breadth aid,
 ## never a gate.
